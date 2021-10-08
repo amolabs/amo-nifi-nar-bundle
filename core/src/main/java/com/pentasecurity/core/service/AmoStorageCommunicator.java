@@ -1,0 +1,74 @@
+package com.pentasecurity.core.service;
+
+import com.pentasecurity.core.dto.*;
+import com.pentasecurity.core.helper.RetrofitInitializer;
+import com.pentasecurity.core.utils.CryptoUtils;
+import com.pentasecurity.core.utils.JsonUtils;
+import lombok.extern.slf4j.Slf4j;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+@Slf4j
+public class AmoStorageCommunicator {
+    public static Retrofit retrofit = RetrofitInitializer.getRetrofitAmoStorage();
+    public static AmoStorageHttpRequestor httpRequestor = retrofit.create(AmoStorageHttpRequestor.class);
+
+    public static String requestAuthToken(String owner, String hashContent) {
+        PostAuthResponse result = null;
+        try {
+            Response<PostAuthResponse> response = httpRequestor.postAuth(
+                    new PostAuthRequest(owner, new Operation("upload", hashContent))
+            ).execute();
+
+            result = response.body();
+
+        } catch (IOException e) {
+            log.error("request post auth error happened: {}", e.getMessage());
+        }
+        return result.getToken();
+    }
+
+    public static String requestUpload(String owner,
+                                       String hash,
+                                       String accessToken,
+                                       byte[] publicKey,
+                                       byte[] signature,
+                                       byte[] content) {
+        Map<String, String> headerMap = new HashMap<>();
+        headerMap.put("X-Auth-Token", accessToken);
+        headerMap.put("X-Public-Key", CryptoUtils.bytesToHex(publicKey));
+        headerMap.put("X-Signature", CryptoUtils.bytesToHex(signature));
+
+        Metadata metadata = new Metadata(owner, hash);
+        RequestBody ownerBody = RequestBody.create(MediaType.parse("text/plain"), owner);
+        RequestBody metadataBody =
+                RequestBody.create(MediaType.parse("application/json"), JsonUtils.toJson(metadata));
+
+        Map<String, RequestBody> partMap = new HashMap<>();
+        partMap.put("owner", ownerBody);
+        partMap.put("metadata", metadataBody);
+
+        RequestBody fileBody = RequestBody.create(MediaType.parse("application/octet-stream"), content);
+        MultipartBody.Part partFile = MultipartBody.Part.createFormData("file", null, fileBody);
+
+        PostParcelsResponse result = null;
+        try {
+            Response<PostParcelsResponse> response =
+                    httpRequestor.postParcels(headerMap, partMap, partFile).execute();
+
+            result = response.body();
+
+        } catch (IOException e) {
+            log.error("request post parcels error happened: {}", e.getMessage());
+        }
+
+        return result.getParcelId();
+    }
+}

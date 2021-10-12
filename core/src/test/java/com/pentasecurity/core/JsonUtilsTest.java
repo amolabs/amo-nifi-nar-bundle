@@ -1,6 +1,7 @@
 package com.pentasecurity.core;
 
-import com.pentasecurity.core.dto.Metadata;
+import com.pentasecurity.core.dto.market.JwtLoginPayload;
+import com.pentasecurity.core.dto.storage.Metadata;
 import com.pentasecurity.core.dto.rpc.JsonRpc;
 import com.pentasecurity.core.utils.JsonUtils;
 import org.junit.Test;
@@ -30,5 +31,15 @@ public class JsonUtilsTest {
         System.out.println(JsonUtils.toJson(jsonRpc));
 
         assertThat(JsonUtils.toJson(jsonRpc), is("{\"jsonrpc\":\"2.0\",\"id\":\"status\",\"method\":\"status\"}"));
+    }
+
+    @Test
+    public void fromJsonTest() {
+        String json = "{\"sub\":\"hjs6877@gmail.com\",\"role\":[\"ROLE_USER\"],\"sellerId\":33,\"buyerId\":30,\"exp\":1632451265,\"iat\":1632447665,\"memberId\":45}";
+        JwtLoginPayload loginPayload = (JwtLoginPayload) JsonUtils.fromJson(json, JwtLoginPayload.class);
+
+        assertThat(loginPayload.getSellerId(), is(33L));
+        assertThat(loginPayload.getBuyerId(), is(30L));
+        assertThat(loginPayload.getMemberId(), is(45L));
     }
 }

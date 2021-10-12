@@ -2,9 +2,9 @@ package com.pentasecurity.core.service;
 
 import com.google.gson.Gson;
 import com.pentasecurity.core.crypto.ECDSA;
-import com.pentasecurity.core.dto.chain.Payload;
-import com.pentasecurity.core.dto.chain.Signature;
 import com.pentasecurity.core.dto.chain.Transaction;
+import com.pentasecurity.core.dto.chain.Signature;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.jce.ECNamedCurveTable;
@@ -25,7 +25,7 @@ import java.util.Map;
 
 
 @Slf4j
-public class RegisterTransactionCreator extends TransactionCreator implements TransactionCreatable{
+public class GrantTransactionCreator extends TransactionCreator implements TransactionCreatable{
     @Override
     public Transaction createTransaction() {
         return null;
@@ -55,21 +55,20 @@ public class RegisterTransactionCreator extends TransactionCreator implements Tr
         return md.digest();
     }
 
-    public Transaction createRegisterTx(String sender, BigInteger fee, int last_height, String parcelId, String custody, String proxy_account, String extraInfo) {
+    public Transaction createGrantTx(String sender,
+                                     BigInteger fee,
+                                     int last_height,
+                                     String parcelId,
+                                     String custody,
+                                     String recipient) {
         Map<String, Object> map = new HashMap<>();
         map.put("parcelId", parcelId);
+        map.put("recipient", recipient);
 
-
-        if (StringUtils.isNotBlank(proxy_account)) {
-            map.put("proxy_account", proxy_account);
-        }
         if (StringUtils.isNotBlank(custody)) {
             map.put("custody", custody);
         }
-        if (StringUtils.isNotBlank(extraInfo)) {
-            map.put("extraInfo", extraInfo);
-        }
-        return createTx(Transaction.TxType.register, sender, fee, last_height, map);
+        return createTx(Transaction.TxType.grant, sender, fee, last_height, map);
     }
 
     public Transaction setupTx(
@@ -106,6 +105,7 @@ public class RegisterTransactionCreator extends TransactionCreator implements Tr
 
         return createTx(Transaction.TxType.transfer, sender, fee, last_height, map);
     }
+
 
 /*
     public PrivateKey generatePrivateKey(byte[] keyBin) throws InvalidKeySpecException, NoSuchAlgorithmException {

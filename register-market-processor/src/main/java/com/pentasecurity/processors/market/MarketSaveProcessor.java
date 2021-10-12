@@ -14,13 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.pentasecurity.processors.amochain;
+package com.pentasecurity.processors.market;
 
-import com.pentasecurity.core.crypto.ECDSA;
-import com.pentasecurity.core.dto.chain.Transaction;
 import com.pentasecurity.core.exception.InvalidIncomingProcessorException;
-import com.pentasecurity.core.service.AmoChainCommunicator;
-import com.pentasecurity.core.service.RegisterTransactionCreator;
+import com.pentasecurity.core.service.MarketCommunicator;
 import org.apache.nifi.annotation.behavior.ReadsAttribute;
 import org.apache.nifi.annotation.behavior.ReadsAttributes;
 import org.apache.nifi.annotation.behavior.WritesAttribute;
@@ -36,7 +33,6 @@ import org.apache.nifi.processor.*;
 import org.apache.nifi.processor.exception.ProcessException;
 import org.apache.nifi.processor.util.StandardValidators;
 
-import java.math.BigInteger;
 import java.util.*;
 
 @Tags({"example"})
@@ -44,26 +40,56 @@ import java.util.*;
 @SeeAlso({})
 @ReadsAttributes({@ReadsAttribute(attribute="", description="")})
 @WritesAttributes({@WritesAttribute(attribute="", description="")})
-public class AmoChainRegisterProcessor extends AbstractProcessor {
+public class MarketSaveProcessor extends AbstractProcessor {
     /**
-     * ** 기본적으로 private key 정보와 마켓 서버의 로그인 정보는 NiFi 사용자가 직접 Parameter Context에 sensitive 정보로
-     * 입력을 해둔다.
-     * - last height block을 조회한다.
-     * - Register TX를 생성한다.
-     * - Register TX를 sign한다.
-     * - sign된 Register TX를 AMO 체인에 전송한다.
+     * - Market Server 서버 로그인 처리
+     * - Market에 저장할 Parcel 정보 생성
+     * - 생성한 Parcel 정보를 Market에 저장
+     * @param context
      */
-    public static final String PRIVATE_KEY = "#{auth.private.key}";
+    public static final String LOGIN_ID = "#{login.id}";
+    public static final String LOGIN_PASSWORD = "#{login.password}";
+    public static final String PRODUCT_ID = "#{product.id}";
+    public static final String PARCEL_PRICE = "#{parcel.price}";
 
-    // TODO 사용자가 임의로 수정 불가능하도록 하는 방법은?
-    public static final PropertyDescriptor PROP_PRIVATE_KEY = new PropertyDescriptor.Builder()
+    public static final PropertyDescriptor PROP_LOGIN_ID = new PropertyDescriptor.Builder()
+            .name("login-id")
+            .displayName("Login ID")
+            .description("Specifies a login id for authentication")
+            .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
+            .required(true)
+            .sensitive(true)
+            .defaultValue(LOGIN_ID)
+            .build();
+
+    public static final PropertyDescriptor PROP_LOGIN_PASSWORD = new PropertyDescriptor.Builder()
             .name("private-key")
             .displayName("Private Key")
             .description("Specifies a private key for authentication")
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
             .required(true)
             .sensitive(true)
-            .defaultValue(PRIVATE_KEY)
+            .defaultValue(LOGIN_PASSWORD)
+            .build();
+
+    public static final PropertyDescriptor PROP_PRODUCT_ID = new PropertyDescriptor.Builder()
+            .name("product-id")
+            .displayName("Product ID")
+            .description("Specifies a product id for parcel")
+            .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
+            .required(true)
+            .sensitive(true)
+            .defaultValue(PRODUCT_ID)
+            .build();
+
+    public static final PropertyDescriptor PROP_PARCEL_PRICE = new PropertyDescriptor.Builder()
+            .name("parcel-price")
+            .displayName("Parcel Price")
+            .description("Specifies price for parcel")
+            .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
+            .required(true)
+            .sensitive(true)
+            .defaultValue(PARCEL_PRICE)
             .build();
 
     public static final Relationship REL_SUCCESS = new Relationship.Builder()
@@ -88,7 +114,10 @@ public class AmoChainRegisterProcessor extends AbstractProcessor {
     @Override
     protected void init(final ProcessorInitializationContext context) {
         final List<PropertyDescriptor> descriptors = new ArrayList<>();
-        descriptors.add(PROP_PRIVATE_KEY);
+        descriptors.add(PROP_LOGIN_ID);
+        descriptors.add(PROP_LOGIN_PASSWORD);
+        descriptors.add(PROP_PRODUCT_ID);
+        descriptors.add(PROP_PARCEL_PRICE);
 
         this.descriptors = Collections.unmodifiableList(descriptors);
 
@@ -122,41 +151,27 @@ public class AmoChainRegisterProcessor extends AbstractProcessor {
         }
 
         String previousProcessorName = flowFile.getAttribute("previous.processor.name");
-        if (!previousProcessorName.equals("AmoStorageUploadProcessor")) {
+        if (!previousProcessorName.equals("AmoChainRegisterProcessor")) {
             throw new InvalidIncomingProcessorException("Invalid Incoming Processor");
         }
 
-        /**
-         * - TX 생성(ㅇ)
-         * - TX Sign(ㅇ)
-         * - TX 전송
-         * - FlowFile을 transfer한다.
-         */
+        String loginId = context.getProperty(PROP_LOGIN_ID).getValue();
+        String loginPassword = context.getProperty(PROP_LOGIN_PASSWORD).getValue();
+        long productId = Long.parseLong(context.getProperty(PROP_PRODUCT_ID).getValue());
+        String parcelPrice = context.getProperty(PROP_PARCEL_PRICE).getValue();
+        String parcelId = flowFile.getAttribute("parcel.id");
+
         try {
-            String privateKeyString = context.getProperty(PROP_PRIVATE_KEY).getValue();
+            String accessToken = MarketCommunicator.requestLogin(loginId, loginPassword);
+            MarketCommunicator.requestSaveParcel(accessToken, parcelId, productId, parcelPrice);
 
-            byte[] privateKey32Bytes = ECDSA.getPrivateKey32Bytes(privateKeyString);
-            byte[] publicKey65Bytes = ECDSA.getPublicKey65Bytes(privateKeyString);
-            int latestBlockHeight = Integer.parseInt(AmoChainCommunicator.getLatestBlockHeight());
-            String sender = ECDSA.getAddressFromPrivateKeyString(privateKeyString);
-            final BigInteger fee = new BigInteger("0");
-            String parcelID = flowFile.getAttribute("parcel.id");
-
-            RegisterTransactionCreator registerTransactionCreator = new RegisterTransactionCreator();
-            Transaction amoTx = null;
-            amoTx = registerTransactionCreator.createRegisterTx(sender, fee, latestBlockHeight, parcelID, null, null, null);
-            String signedTx = registerTransactionCreator.create(privateKey32Bytes, publicKey65Bytes, amoTx);
-            logger.info("#### signed tx : " + signedTx);
-
-            AmoChainCommunicator.requestRegisterTx(signedTx);
-
-            session.putAttribute(flowFile, "tx.signed", signedTx);
-            session.putAttribute(flowFile, "previous.processor.name", "AmoChainRegisterProcessor");
+            session.putAttribute(flowFile, "previous.processor.name", "AmoMarketSaveProcessor");
             session.transfer(flowFile, REL_SUCCESS);
         } catch (Exception e) {
             session.rollback();
             logger.error("Register Tx Processor Error happened: {}", e.getCause());
             throw new ProcessException(e.getMessage());
         }
+
     }
 }

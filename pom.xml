@@ -20,24 +20,14 @@
         <module>nar</module>
         <module>upload-processor</module>
         <module>register-tx-processor</module>
+        <module>register-market-processor</module>
+        <module>auto-request-processor</module>
+        <module>auto-grant-processor</module>
+        <module>auto-download-processor</module>
     </modules>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
     </properties>
-
-    <dependencies>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-all</artifactId>
-            <version>1.3</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
 </project>

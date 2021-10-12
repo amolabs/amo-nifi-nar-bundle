@@ -1,6 +1,6 @@
 package com.pentasecurity.core.service;
 
-import com.pentasecurity.core.dto.*;
+import com.pentasecurity.core.dto.storage.*;
 import com.pentasecurity.core.helper.RetrofitInitializer;
 import com.pentasecurity.core.utils.CryptoUtils;
 import com.pentasecurity.core.utils.JsonUtils;
@@ -70,5 +70,28 @@ public class AmoStorageCommunicator {
         }
 
         return result.getParcelId();
+    }
+
+    public static String requestDownload(String parcelId,
+                                         String accessToken,
+                                         byte[] publicKey,
+                                         byte[] signature) {
+        Map<String, String> headerMap = new HashMap<>();
+        headerMap.put("X-Auth-Token", accessToken);
+        headerMap.put("X-Public-Key", CryptoUtils.bytesToHex(publicKey));
+        headerMap.put("X-Signature", CryptoUtils.bytesToHex(signature));
+
+        GetDownloadParcelResponse result = null;
+        try {
+            Response<GetDownloadParcelResponse> response =
+                    httpRequestor.getDownloadParcel(headerMap, parcelId).execute();
+
+            result = response.body();
+
+        } catch (IOException e) {
+            log.error("request get download parcel error happened: {}", e.getMessage());
+        }
+
+        return result.getData();
     }
 }

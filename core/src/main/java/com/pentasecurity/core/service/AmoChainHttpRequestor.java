@@ -1,7 +1,8 @@
 package com.pentasecurity.core.service;
 
-import com.pentasecurity.core.dto.RegisterTxResponse;
-import com.pentasecurity.core.dto.StatusResponse;
+import com.pentasecurity.core.dto.chain.GrantTxResponse;
+import com.pentasecurity.core.dto.chain.RegisterTxResponse;
+import com.pentasecurity.core.dto.chain.StatusResponse;
 import com.pentasecurity.core.dto.rpc.JsonRpc;
 import retrofit2.Call;
 import retrofit2.http.Body;
@@ -13,4 +14,7 @@ public interface AmoChainHttpRequestor {
 
     @POST("/")
     Call<RegisterTxResponse> postRegisterTx(@Body JsonRpc jsonRpc);
+
+    @POST("/")
+    Call<GrantTxResponse> postGrantTx(@Body JsonRpc jsonRpc);
 }

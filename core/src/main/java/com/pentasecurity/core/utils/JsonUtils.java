@@ -7,4 +7,7 @@ public class JsonUtils {
     public static String toJson(Object object) {
         return gson.toJson(object);
     }
+    public static Object fromJson(String json, Class clazz) {
+        return gson.fromJson(json, clazz);
+    }
 }

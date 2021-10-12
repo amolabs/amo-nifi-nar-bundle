@@ -1,8 +1,8 @@
 package com.pentasecurity.core;
 
-import com.pentasecurity.core.dto.Operation;
-import com.pentasecurity.core.dto.PostAuthRequest;
-import com.pentasecurity.core.dto.PostAuthResponse;
+import com.pentasecurity.core.dto.storage.Operation;
+import com.pentasecurity.core.dto.storage.PostAuthRequest;
+import com.pentasecurity.core.dto.storage.PostAuthResponse;
 import com.pentasecurity.core.helper.RetrofitInitializer;
 import com.pentasecurity.core.service.AmoStorageHttpRequestor;
 import org.junit.Test;

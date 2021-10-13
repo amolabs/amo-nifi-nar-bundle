@@ -7,23 +7,18 @@
     <parent>
         <groupId>org.apache.nifi</groupId>
         <artifactId>nifi-nar-bundles</artifactId>
-        <version>1.11.4</version>
+        <version>1.14.0</version>
     </parent>
 
     <groupId>com.pentasecurity</groupId>
-    <artifactId>amo-nifi-nar-bundle</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <artifactId>nifi-amo-nar-bundle</artifactId>
+    <version>1.0</version>
     <packaging>pom</packaging>
 
     <modules>
-        <module>core</module>
-        <module>nar</module>
-        <module>upload-processor</module>
-        <module>register-tx-processor</module>
-        <module>register-market-processor</module>
-        <module>auto-request-processor</module>
-        <module>auto-grant-processor</module>
-        <module>auto-download-processor</module>
+        <module>nifi-amo-core</module>
+        <module>nifi-amo-nar</module>
+        <module>nifi-amo-processors</module>
     </modules>
 
     <properties>

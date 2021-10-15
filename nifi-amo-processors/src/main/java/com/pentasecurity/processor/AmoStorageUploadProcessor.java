@@ -137,7 +137,7 @@ public class AmoStorageUploadProcessor extends AbstractProcessor {
                 previousProcessorName.equals("AmoMarketSaveProcessor"))) {
             throw new InvalidIncomingProcessorException("Invalid Incoming Processor");
         }
-        String privateKeyString = context.getProperty(PROP_PRIVATE_KEY).getValue();
+        String privateKeyString = context.getProperty(PROP_PRIVATE_KEY).evaluateAttributeExpressions(flowFile).getValue();
 
         // TODO session.exportTO가 정상적으로 동작하지 않을 시, 사용한다.
         try {
@@ -152,31 +152,36 @@ public class AmoStorageUploadProcessor extends AbstractProcessor {
             session.exportTo(flowFile, outputStream);
             final String content = outputStream.toString("UTF-8");
             logger.info("# content: " + content);
-            BCECPrivateKey privateKey = (BCECPrivateKey) ECDSA.getPrivateKeyFromHexString(privateKeyString, "secp256r1");
+
+            BCECPrivateKey privateKey = (BCECPrivateKey) ECDSA.getPrivateKeyFromHexString(privateKeyString);
+
             BCECPrivateKey privateKeyNew = ECDSA.getPrivateKey(privateKey.getEncoded());
 
             BCECPublicKey publicKey = (BCECPublicKey) ECDSA.getPublicKeyFromPrivateKey(privateKey);
             BCECPublicKey publicKeyNew = (BCECPublicKey) ECDSA.getPublicKey(publicKey.getEncoded());
             String address = ECDSA.getAddressFromPublicKey(publicKeyNew);
-
+            logger.info("# address: " + address);
             byte[] sha256 = CryptoUtils.sha256(content);
             String hashContent = CryptoUtils.bytesToHex(sha256);
-
+            logger.info("# hashContent: " + hashContent);
             String accessToken = AmoStorageCommunicator.requestAuthToken(address, hashContent);
+            logger.info("# accessToken: " + accessToken);
 
             byte[] publicKey65Bytes = ECDSA.convertPubicKeyTo65Bytes(publicKeyNew);
             byte[] signature = ECDSA.getSignature(privateKeyNew, accessToken);
 
 
-            String parcelId = AmoStorageCommunicator.requestUpload(address,
-                    hashContent, accessToken, publicKey65Bytes, signature, outputStream.toByteArray());
-
-            session.putAttribute(flowFile, "parcel.id", parcelId);
-            session.putAttribute(flowFile, "previous.processor.name", "AmoStorageUploadProcessor");
+//            String parcelId = AmoStorageCommunicator.requestUpload(address,
+//                    hashContent, accessToken, publicKey65Bytes, signature, outputStream.toByteArray());
+//
+//            session.putAttribute(flowFile, "parcel.id", parcelId);
+//            session.putAttribute(flowFile, "previous.processor.name", "AmoStorageUploadProcessor");
             session.transfer(flowFile, REL_SUCCESS);
         } catch (Exception e) {
-            session.rollback();
-            logger.error("Upload Processor Error happened: {}", e.getCause());
+//            session.rollback();
+            logger.error("Upload Processor Error happened: " + e.getMessage());
+            e.printStackTrace();
+            logger.error(e.getStackTrace().toString());
             throw new ProcessException(e.getMessage());
         }
     }

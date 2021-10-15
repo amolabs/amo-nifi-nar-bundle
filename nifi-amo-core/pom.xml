@@ -21,9 +21,14 @@
     </properties>
 
     <dependencies>
+<!--        <dependency>-->
+<!--            <groupId>org.apache.nifi</groupId>-->
+<!--            <artifactId>nifi-security-utils</artifactId>-->
+<!--            <version>1.11.4</version>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>org.bouncycastle</groupId>
-            <artifactId>bcpkix-jdk15on</artifactId>
+            <artifactId>bcprov-jdk15on</artifactId>
             <version>1.69</version>
         </dependency>
         <dependency>

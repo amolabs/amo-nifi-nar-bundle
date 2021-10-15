@@ -157,8 +157,7 @@ public class AmoAutoDownloadProcessor extends AbstractProcessor {
             // ORDER TYPE 이 AUTO 인 주문 중에서 ORDER_GRANT 이고, isDownloaded가 false 상태인 주문 목록을 조회
             List<BuyerAutoOrderData> buyerAutoOrders =
                     MarketCommunicator.requestGetBuyerAutoOrders(authorization, buyerId);
-
-            BCECPrivateKey privateKey = (BCECPrivateKey) ECDSA.getPrivateKeyFromHexString(privateKeyString, "secp256r1");
+            BCECPrivateKey privateKey = (BCECPrivateKey) ECDSA.getPrivateKeyFromHexString(privateKeyString);
             BCECPrivateKey privateKeyNew = ECDSA.getPrivateKey(privateKey.getEncoded());
 
             BCECPublicKey publicKey = (BCECPublicKey) ECDSA.getPublicKeyFromPrivateKey(privateKey);

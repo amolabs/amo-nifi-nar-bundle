@@ -16,12 +16,20 @@
  */
 package com.pentasecurity.processor;
 
+import com.pentasecurity.core.utils.CryptoUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.nifi.util.MockFlowFile;
 import org.apache.nifi.util.TestRunner;
 import org.apache.nifi.util.TestRunners;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
+
+import static org.junit.Assert.assertTrue;
 
 
 public class AmoStorageUploadProcessorTest {
@@ -35,30 +43,30 @@ public class AmoStorageUploadProcessorTest {
 
     @Test
     public void testProcessor() throws NoSuchAlgorithmException {
-//        InputStream content = new ByteArrayInputStream("{\"hello\":\"nifi rocks\"}".getBytes());
-//        TestRunner runner = TestRunners.newTestRunner(new AmoStorageUploadProcessor());
-//
-//        runner.setProperty(AmoStorageUploadProcessor.PROP_PRIVATE_KEY, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-//
-//        runner.enqueue(content);
-//        runner.run(1);
-//        runner.assertQueueEmpty();
-//
-//        List<MockFlowFile> results = runner.getFlowFilesForRelationship(AmoStorageUploadProcessor.REL_SUCCESS);
-//        assertTrue("1 match", results.size() == 1);
-//
-//        MockFlowFile result = results.get(0);
-//        String resultValue = new String(runner.getContentAsByteArray(result));
-//
-//        System.out.println(resultValue);
-//
-//        System.out.println("Match: " + IOUtils.toString(runner.getContentAsByteArray(result), "UTF-8"));
-//
-//        result.assertContentEquals("{\"hello\":\"nifi rocks\"}");
-//
-//        byte[] sha256 = CryptoUtils.sha256(resultValue);
-//        String hashedContent = CryptoUtils.bytesToHex(sha256);
-//        System.out.println(hashedContent);
+        InputStream content = new ByteArrayInputStream("{\"hello\":\"nifi rocks\"}".getBytes());
+        TestRunner runner = TestRunners.newTestRunner(new AmoStorageUploadProcessor());
+        runner.setValidateExpressionUsage(false);
+        runner.setProperty(AmoStorageUploadProcessor.PROP_PRIVATE_KEY, "269d46c9cfafe86be88fea3887422b520f7a9e8db829c2f8582200806e8d337a");
+
+        runner.enqueue(content);
+        runner.run(1);
+        runner.assertQueueEmpty();
+
+        List<MockFlowFile> results = runner.getFlowFilesForRelationship(AmoStorageUploadProcessor.REL_SUCCESS);
+        assertTrue("1 match", results.size() == 1);
+
+        MockFlowFile result = results.get(0);
+        String resultValue = new String(runner.getContentAsByteArray(result));
+
+        System.out.println(resultValue);
+
+        System.out.println("Match: " + IOUtils.toString(runner.getContentAsByteArray(result), "UTF-8"));
+
+        result.assertContentEquals("{\"hello\":\"nifi rocks\"}");
+
+        byte[] sha256 = CryptoUtils.sha256(resultValue);
+        String hashedContent = CryptoUtils.bytesToHex(sha256);
+        System.out.println(hashedContent);
     }
 
 }

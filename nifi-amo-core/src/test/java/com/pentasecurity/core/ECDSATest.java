@@ -4,6 +4,7 @@ import com.pentasecurity.core.crypto.ECDSA;
 import com.pentasecurity.core.utils.CryptoUtils;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -15,12 +16,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 
 public class ECDSATest {
-    private String testPrivateKey = "2fc3c4ecdef6def3a38ba46f99034810c75ead9c83a302fcaf6befcd74789fc6";
-    private String testPublicKey = "04f385ea90cfa59890a233ffe7300d8d0fb382c24bc452cf27b8805c796b4cd165c2fcaa034ae0c8c0578e1c5ee32d1d7b648ec4f7683ae4948ae05f7d0b45b4e0";
+    private String testPrivateKey = "269d46c9cfafe86be88fea3887422b520f7a9e8db829c2f8582200806e8d337a";
+    private String testPublicKey = "04b8b6eae6da8a3eb2391064e2aa12a532fc3b2e2c5b37f258ea3c83f4905131b57cc4e4864adf68a71bfee34420388a8d12eb9d17f053a74f164523cc8c085e80";
 
     @Test
     public void generateKeyPairTest() throws NoSuchProviderException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, IOException, InvalidKeySpecException {
-
         KeyPair keyPair = ECDSA.generateKeyPair();
 
         BCECPrivateKey privateKey = (BCECPrivateKey) keyPair.getPrivate();
@@ -36,7 +36,6 @@ public class ECDSATest {
 
     @Test
     public void getPrivateKeyTest() throws NoSuchProviderException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, IOException, InvalidKeySpecException {
-
         KeyPair keyPair = ECDSA.generateKeyPair();
 
         BCECPrivateKey privateKey = (BCECPrivateKey) keyPair.getPrivate();
@@ -49,7 +48,6 @@ public class ECDSATest {
 
     @Test
     public void getPublicKeyTest() throws NoSuchProviderException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, IOException, InvalidKeySpecException {
-
         KeyPair keyPair = ECDSA.generateKeyPair();
 
         BCECPublicKey publicKey = (BCECPublicKey) keyPair.getPublic();
@@ -62,8 +60,8 @@ public class ECDSATest {
     }
 
     @Test
-    public void getPrivateKeyFromHexStringTest() throws NoSuchAlgorithmException, InvalidKeySpecException, IOException {
-        BCECPrivateKey privateKey = (BCECPrivateKey) ECDSA.getPrivateKeyFromHexString(testPrivateKey, "secp256r1");
+    public void getPrivateKeyFromHexStringTest() throws NoSuchAlgorithmException, InvalidKeySpecException, IOException, NoSuchProviderException {
+        BCECPrivateKey privateKey = (BCECPrivateKey) ECDSA.getPrivateKeyFromHexString(testPrivateKey);
 
         BCECPrivateKey privateKeyNew = ECDSA.getPrivateKey(privateKey.getEncoded());
 
@@ -74,7 +72,7 @@ public class ECDSATest {
 
     @Test
     public void getPublicKeyFromPrivateKeyTest() throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchProviderException, InvalidKeySpecException, IOException {
-        BCECPrivateKey privateKey = (BCECPrivateKey) ECDSA.getPrivateKeyFromHexString(testPrivateKey, "secp256r1");
+        BCECPrivateKey privateKey = (BCECPrivateKey) ECDSA.getPrivateKeyFromHexString(testPrivateKey);
         BCECPublicKey publicKey = (BCECPublicKey) ECDSA.getPublicKeyFromPrivateKey(privateKey);
 
         BCECPublicKey publicKeyNew = (BCECPublicKey) ECDSA.getPublicKey(publicKey.getEncoded());
@@ -87,7 +85,7 @@ public class ECDSATest {
 
     @Test
     public void getAddressFromPublicKeyTest() throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchProviderException, InvalidKeySpecException {
-        BCECPrivateKey privateKey = (BCECPrivateKey) ECDSA.getPrivateKeyFromHexString(testPrivateKey, "secp256r1");
+        BCECPrivateKey privateKey = (BCECPrivateKey) ECDSA.getPrivateKeyFromHexString(testPrivateKey);
         BCECPublicKey publicKey = (BCECPublicKey) ECDSA.getPublicKeyFromPrivateKey(privateKey);
 
         BCECPublicKey publicKeyNew = (BCECPublicKey) ECDSA.getPublicKey(publicKey.getEncoded());
@@ -98,7 +96,7 @@ public class ECDSATest {
 
     @Test
     public void getSignatureTest() throws InvalidKeySpecException, NoSuchAlgorithmException, IOException, SignatureException, InvalidKeyException, NoSuchProviderException {
-        BCECPrivateKey privateKey = (BCECPrivateKey) ECDSA.getPrivateKeyFromHexString(testPrivateKey, "secp256r1");
+        BCECPrivateKey privateKey = (BCECPrivateKey) ECDSA.getPrivateKeyFromHexString(testPrivateKey);
         BCECPrivateKey privateKeyNew = ECDSA.getPrivateKey(privateKey.getEncoded());
 
         BCECPublicKey publicKey = (BCECPublicKey) ECDSA.getPublicKeyFromPrivateKey(privateKey);

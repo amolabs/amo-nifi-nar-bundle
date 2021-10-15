@@ -133,8 +133,7 @@ public class AmoChainRegisterProcessor extends AbstractProcessor {
          * - FlowFile을 transfer한다.
          */
         try {
-            String privateKeyString = context.getProperty(PROP_PRIVATE_KEY).getValue();
-
+            String privateKeyString = context.getProperty(PROP_PRIVATE_KEY).evaluateAttributeExpressions(flowFile).getValue();
             byte[] privateKey32Bytes = ECDSA.getPrivateKey32Bytes(privateKeyString);
             byte[] publicKey65Bytes = ECDSA.getPublicKey65Bytes(privateKeyString);
             int latestBlockHeight = Integer.parseInt(AmoChainCommunicator.getLatestBlockHeight());

@@ -28,8 +28,9 @@ import java.util.Arrays;
 
 @Slf4j
 public class ECDSA {
-    private static ECParameterSpec SPEC = ECNamedCurveTable.getParameterSpec("secp256r1");
+    private static ECNamedCurveParameterSpec SPEC = ECNamedCurveTable.getParameterSpec("secp256r1");
     static {
+        Security.removeProvider(BouncyCastleProvider.PROVIDER_NAME);
         Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
     }
 
@@ -47,25 +48,25 @@ public class ECDSA {
         return kf.generatePrivate(privKeySpec);
     }
 
-    public static PublicKey generateECDSAPublicKey(byte[] publicKeyBytes) throws InvalidKeySpecException, NoSuchAlgorithmException {
+    public static PublicKey generateECDSAPublicKey(byte[] publicKeyBytes) throws InvalidKeySpecException, NoSuchAlgorithmException, NoSuchProviderException {
         ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec("secp256r1");
-        KeyFactory kf = KeyFactory.getInstance("ECDSA", new BouncyCastleProvider());
+        KeyFactory kf = KeyFactory.getInstance("ECDSA", "BC");
         ECNamedCurveSpec params = new ECNamedCurveSpec("secp256r1", spec.getCurve(), spec.getG(), spec.getN());
         java.security.spec.ECPoint point = ECPointUtil.decodePoint(params.getCurve(), publicKeyBytes);
         java.security.spec.ECPublicKeySpec pubKeySpec = new java.security.spec.ECPublicKeySpec(point, params);
         return kf.generatePublic(pubKeySpec);
     }
 
-    public static BCECPrivateKey getPrivateKey(byte[] privKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public static BCECPrivateKey getPrivateKey(byte[] privKey) throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException {
         EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(privKey);
-        KeyFactory kf = KeyFactory.getInstance("ECDSA");
+        KeyFactory kf = KeyFactory.getInstance("ECDSA", "BC");
         BCECPrivateKey privateKey = (BCECPrivateKey) kf.generatePrivate(privateKeySpec);
         return privateKey;
     }
 
-    public static PublicKey getPublicKey(byte[] pubKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public static PublicKey getPublicKey(byte[] pubKey) throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException {
         EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(pubKey);
-        KeyFactory kf = KeyFactory.getInstance("ECDSA");
+        KeyFactory kf = KeyFactory.getInstance("ECDSA", "BC");
         PublicKey pub = kf.generatePublic(publicKeySpec);
         return pub;
     }
@@ -82,18 +83,12 @@ public class ECDSA {
         return publicKeyInfo.getPublicKeyData().getBytes();
     }
 
-    public static PrivateKey getPrivateKeyFromHexString(String privateKey, String curveName) {
+    public static PrivateKey getPrivateKeyFromHexString(String privateKey) throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException {
         BigInteger priv = new BigInteger(privateKey, 16);
-        ECParameterSpec ecParameterSpec = ECNamedCurveTable.getParameterSpec(curveName);
+        ECPrivateKeySpec privateKeySpec = new ECPrivateKeySpec(priv, SPEC);
+        KeyFactory keyFactory = KeyFactory.getInstance("ECDSA", "BC");
 
-        ECPrivateKeySpec privateKeySpec = new ECPrivateKeySpec(priv, ecParameterSpec);
-        try {
-            KeyFactory keyFactory = KeyFactory.getInstance("ECDSA");
-            return keyFactory.generatePrivate(privateKeySpec);
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-            e.printStackTrace();
-            return null;
-        }
+        return keyFactory.generatePrivate(privateKeySpec);
     }
 
     public static PublicKey getPublicKeyFromPrivateKey(ECPrivateKey privateKey) throws NoSuchProviderException, NoSuchAlgorithmException, InvalidKeySpecException {
@@ -109,8 +104,8 @@ public class ECDSA {
     }
 
     public static byte[] getPrivateKey32Bytes(String privateKeyString) throws InvalidKeySpecException,
-            NoSuchAlgorithmException, IOException {
-        BCECPrivateKey privateKey = (BCECPrivateKey) getPrivateKeyFromHexString(privateKeyString, "secp256r1");
+            NoSuchAlgorithmException, IOException, NoSuchProviderException {
+        BCECPrivateKey privateKey = (BCECPrivateKey) getPrivateKeyFromHexString(privateKeyString);
         BCECPrivateKey privateKeyNew = getPrivateKey(privateKey.getEncoded());
 
         byte[] privateKey32Bytes = convertPrivateKeyTo32Bytes(privateKeyNew);
@@ -121,11 +116,11 @@ public class ECDSA {
     public static byte[] getPublicKey65Bytes(String privateKeyString) throws InvalidKeySpecException,
             NoSuchAlgorithmException, IOException, NoSuchProviderException {
         BCECPrivateKey privateKey =
-                (BCECPrivateKey) getPrivateKeyFromHexString(privateKeyString, "secp256r1");
+                (BCECPrivateKey) getPrivateKeyFromHexString(privateKeyString);
         BCECPublicKey publicKey = (BCECPublicKey) getPublicKeyFromPrivateKey(privateKey);
         BCECPublicKey publicKeyNew = (BCECPublicKey) getPublicKey(publicKey.getEncoded());
 
-        byte[] publicKey65Bytes = ECDSA.convertPubicKeyTo65Bytes(publicKeyNew);
+        byte[] publicKey65Bytes = convertPubicKeyTo65Bytes(publicKeyNew);
 
         return publicKey65Bytes;
     }
@@ -142,7 +137,7 @@ public class ECDSA {
     public static String getAddressFromPrivateKeyString(String privateKeyString) throws NoSuchAlgorithmException,
             NoSuchProviderException, InvalidKeySpecException {
         BCECPrivateKey privateKey =
-                (BCECPrivateKey) getPrivateKeyFromHexString(privateKeyString, "secp256r1");
+                (BCECPrivateKey) getPrivateKeyFromHexString(privateKeyString);
         BCECPublicKey publicKey = (BCECPublicKey) getPublicKeyFromPrivateKey(privateKey);
         BCECPublicKey publicKeyNew = (BCECPublicKey) getPublicKey(publicKey.getEncoded());
 

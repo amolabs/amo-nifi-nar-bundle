@@ -169,6 +169,7 @@ public class AmoAutoDownloadProcessor extends AbstractProcessor {
                 for (String parcelId : buyerAutoOrder.getParcelIds()) {
                     // AMO Storage 서버에 인증 토큰 요청
                     String storageAccessToken = AmoStorageCommunicator.requestAuthToken(address, parcelId);
+                    // TODO signature 부분 수정 필요(AmoStorageUploadProcessor와 같게 작성해야됨)
                     byte[] signature = ECDSA.getSignature(privateKeyNew, storageAccessToken);
 
                     // AMO Storage 서버에 다운로드 요청

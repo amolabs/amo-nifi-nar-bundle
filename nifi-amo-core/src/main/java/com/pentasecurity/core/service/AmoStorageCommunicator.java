@@ -50,18 +50,21 @@ public class AmoStorageCommunicator {
         RequestBody ownerBody = RequestBody.create(MediaType.parse("text/plain"), owner);
         RequestBody metadataBody =
                 RequestBody.create(MediaType.parse("application/json"), JsonUtils.toJson(metadata));
+        RequestBody fileBody = RequestBody.create(MediaType.parse("text/plain"), CryptoUtils.bytesToHex(content));
 
         Map<String, RequestBody> partMap = new HashMap<>();
         partMap.put("owner", ownerBody);
         partMap.put("metadata", metadataBody);
+        partMap.put("file", fileBody);
 
-        RequestBody fileBody = RequestBody.create(MediaType.parse("application/octet-stream"), content);
-        MultipartBody.Part partFile = MultipartBody.Part.createFormData("file", null, fileBody);
+        // TODO Multipart 동작 안함. 나중에 해결
+//        RequestBody fileBody = RequestBody.create(MediaType.parse("application/octet-stream"), content);
+//        MultipartBody.Part partFile = MultipartBody.Part.createFormData("file", null, fileBody);
 
         PostParcelsResponse result = null;
         try {
             Response<PostParcelsResponse> response =
-                    httpRequestor.postParcels(headerMap, partMap, partFile).execute();
+                    httpRequestor.postParcels(headerMap, partMap).execute();
 
             result = response.body();
 

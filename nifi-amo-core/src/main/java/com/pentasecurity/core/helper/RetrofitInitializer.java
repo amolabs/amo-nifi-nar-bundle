@@ -5,7 +5,8 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class RetrofitInitializer {
     private static final Retrofit retrofitAmoStorage = new Retrofit.Builder()
-            .baseUrl("https://storage.market.amolabs.io/api/v1/")
+            .baseUrl("http://127.0.0.1:9090/api/v1/")
+//            .baseUrl("https://storage.market.amolabs.io/api/v1/")
             .addConverterFactory(GsonConverterFactory.create())
             .build();
 

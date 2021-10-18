@@ -100,7 +100,10 @@ public class ECDSA {
         ECPublicKeySpec pubSpec = new ECPublicKeySpec(point, SPEC);
         PublicKey publicKey = keyFactory.generatePublic(pubSpec);
 
-        return publicKey;
+        EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(publicKey.getEncoded());
+        KeyFactory kf = KeyFactory.getInstance("ECDSA", "BC");
+        PublicKey pub = kf.generatePublic(publicKeySpec);
+        return pub;
     }
 
     public static byte[] getPrivateKey32Bytes(String privateKeyString) throws InvalidKeySpecException,

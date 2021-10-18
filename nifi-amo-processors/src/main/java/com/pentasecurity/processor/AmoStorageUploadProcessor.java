@@ -37,8 +37,11 @@ import org.apache.nifi.processor.exception.ProcessException;
 import org.apache.nifi.processor.util.StandardValidators;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
+import org.bouncycastle.jce.interfaces.ECPrivateKey;
+import org.bouncycastle.jce.interfaces.ECPublicKey;
 
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Tags({"AMO Custom Processor for AMO Storage"})
@@ -151,31 +154,29 @@ public class AmoStorageUploadProcessor extends AbstractProcessor {
             final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             session.exportTo(flowFile, outputStream);
             final String content = outputStream.toString("UTF-8");
-            logger.info("# content: " + content);
 
-            BCECPrivateKey privateKey = (BCECPrivateKey) ECDSA.getPrivateKeyFromHexString(privateKeyString);
+            byte[] privateKey32Bytes = ECDSA.getPrivateKey32Bytes(privateKeyString);
+            ECPrivateKey ecPrivateKey = (ECPrivateKey) ECDSA.generateECDSAPrivateKey(privateKey32Bytes);
 
-            BCECPrivateKey privateKeyNew = ECDSA.getPrivateKey(privateKey.getEncoded());
+            BCECPublicKey publicKey = (BCECPublicKey) ECDSA.getPublicKeyFromPrivateKey(ecPrivateKey);
+            byte[] publicKey65Bytes = ECDSA.convertPubicKeyTo65Bytes(publicKey);
 
-            BCECPublicKey publicKey = (BCECPublicKey) ECDSA.getPublicKeyFromPrivateKey(privateKey);
-            BCECPublicKey publicKeyNew = (BCECPublicKey) ECDSA.getPublicKey(publicKey.getEncoded());
-            String address = ECDSA.getAddressFromPublicKey(publicKeyNew);
+
+            String address = ECDSA.getAddressFromPublicKey(publicKey);
             logger.info("# address: " + address);
+
             byte[] sha256 = CryptoUtils.sha256(content);
             String hashContent = CryptoUtils.bytesToHex(sha256);
-            logger.info("# hashContent: " + hashContent);
             String accessToken = AmoStorageCommunicator.requestAuthToken(address, hashContent);
-            logger.info("# accessToken: " + accessToken);
 
-            byte[] publicKey65Bytes = ECDSA.convertPubicKeyTo65Bytes(publicKeyNew);
-            byte[] signature = ECDSA.getSignature(privateKeyNew, accessToken);
+            byte[] signature = ECDSA.sign(ecPrivateKey, accessToken.getBytes(StandardCharsets.UTF_8));
 
 
-//            String parcelId = AmoStorageCommunicator.requestUpload(address,
-//                    hashContent, accessToken, publicKey65Bytes, signature, outputStream.toByteArray());
-//
-//            session.putAttribute(flowFile, "parcel.id", parcelId);
-//            session.putAttribute(flowFile, "previous.processor.name", "AmoStorageUploadProcessor");
+            String parcelId = AmoStorageCommunicator.requestUpload(address,
+                    hashContent, accessToken, publicKey65Bytes, signature, outputStream.toByteArray());
+
+            session.putAttribute(flowFile, "parcel.id", parcelId);
+            session.putAttribute(flowFile, "previous.processor.name", "AmoStorageUploadProcessor");
             session.transfer(flowFile, REL_SUCCESS);
         } catch (Exception e) {
 //            session.rollback();

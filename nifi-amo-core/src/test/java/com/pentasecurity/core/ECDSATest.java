@@ -4,10 +4,13 @@ import com.pentasecurity.core.crypto.ECDSA;
 import com.pentasecurity.core.utils.CryptoUtils;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
+import org.bouncycastle.jce.interfaces.ECPrivateKey;
+import org.bouncycastle.jce.interfaces.ECPublicKey;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 
@@ -95,18 +98,7 @@ public class ECDSATest {
     }
 
     @Test
-    public void getSignatureTest() throws InvalidKeySpecException, NoSuchAlgorithmException, IOException, SignatureException, InvalidKeyException, NoSuchProviderException {
-        BCECPrivateKey privateKey = (BCECPrivateKey) ECDSA.getPrivateKeyFromHexString(testPrivateKey);
-        BCECPrivateKey privateKeyNew = ECDSA.getPrivateKey(privateKey.getEncoded());
-
-        BCECPublicKey publicKey = (BCECPublicKey) ECDSA.getPublicKeyFromPrivateKey(privateKey);
-        BCECPublicKey publicKeyNew = (BCECPublicKey) ECDSA.getPublicKey(publicKey.getEncoded());
-
-        String msg = "Hello";
-
-        byte[] signature = ECDSA.getSignature(privateKeyNew, msg);
-        boolean result = ECDSA.verifySignature(signature, publicKeyNew, msg);
-
-        assertThat(result, is(true));
+    public void signTest() throws InvalidKeySpecException, NoSuchAlgorithmException, IOException, SignatureException, InvalidKeyException, NoSuchProviderException {
+        // TODO
     }
 }

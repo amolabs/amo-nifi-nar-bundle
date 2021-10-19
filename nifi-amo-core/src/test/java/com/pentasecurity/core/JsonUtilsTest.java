@@ -1,6 +1,8 @@
 package com.pentasecurity.core;
 
 import com.pentasecurity.core.dto.market.JwtLoginPayload;
+import com.pentasecurity.core.dto.rpc.ParamsRegisterTx;
+import com.pentasecurity.core.dto.rpc.RegisterTxRpc;
 import com.pentasecurity.core.dto.storage.Metadata;
 import com.pentasecurity.core.dto.rpc.JsonRpc;
 import com.pentasecurity.core.utils.JsonUtils;
@@ -22,15 +24,14 @@ public class JsonUtilsTest {
 
     @Test
     public void toJsonTest2() {
-        Object params = null;
         String jsonrpc = "2.0";
         String id = "status";
         String method = "status";
+        RegisterTxRpc registerTxRpc = new RegisterTxRpc<>(new ParamsRegisterTx("aaaaa"), jsonrpc, id, method);
 
-        JsonRpc jsonRpc = new JsonRpc(jsonrpc, id, method);
-        System.out.println(JsonUtils.toJson(jsonRpc));
+        System.out.println(JsonUtils.toJson(registerTxRpc));
 
-        assertThat(JsonUtils.toJson(jsonRpc), is("{\"jsonrpc\":\"2.0\",\"id\":\"status\",\"method\":\"status\"}"));
+        assertThat(JsonUtils.toJson(registerTxRpc), is("{\"params\":{\"tx\":\"aaaaa\"},\"jsonrpc\":\"2.0\",\"id\":\"status\",\"method\":\"status\"}"));
     }
 
     @Test

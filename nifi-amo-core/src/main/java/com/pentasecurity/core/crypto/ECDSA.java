@@ -128,9 +128,9 @@ public class ECDSA {
         return publicKey65Bytes;
     }
 
-    public static String getAddressFromPublicKey(ECPublicKey publicKey) throws NoSuchAlgorithmException {
-        byte[] bytes = publicKey.getEncoded();
-        byte[] sha256 = CryptoUtils.sha256(bytes);
+    public static String getAddressFromPublicKey(BCECPublicKey publicKey) throws NoSuchAlgorithmException, IOException {
+        byte[] publicKey65Bytes = ECDSA.convertPubicKeyTo65Bytes(publicKey);
+        byte[] sha256 = CryptoUtils.sha256(publicKey65Bytes);
         byte[] slice = Arrays.copyOf(sha256, 20);
         String address = CryptoUtils.bytesToHex(slice);
 
@@ -138,14 +138,13 @@ public class ECDSA {
     }
 
     public static String getAddressFromPrivateKeyString(String privateKeyString) throws NoSuchAlgorithmException,
-            NoSuchProviderException, InvalidKeySpecException {
-        BCECPrivateKey privateKey =
-                (BCECPrivateKey) getPrivateKeyFromHexString(privateKeyString);
+            NoSuchProviderException, InvalidKeySpecException, IOException {
+        BCECPrivateKey privateKey = (BCECPrivateKey) getPrivateKeyFromHexString(privateKeyString);
         BCECPublicKey publicKey = (BCECPublicKey) getPublicKeyFromPrivateKey(privateKey);
         BCECPublicKey publicKeyNew = (BCECPublicKey) getPublicKey(publicKey.getEncoded());
 
-        byte[] bytes = publicKeyNew.getEncoded();
-        byte[] sha256 = CryptoUtils.sha256(bytes);
+        byte[] publicKey65Bytes = ECDSA.convertPubicKeyTo65Bytes(publicKey);
+        byte[] sha256 = CryptoUtils.sha256(publicKey65Bytes);
         byte[] slice = Arrays.copyOf(sha256, 20);
         String address = CryptoUtils.bytesToHex(slice);
 

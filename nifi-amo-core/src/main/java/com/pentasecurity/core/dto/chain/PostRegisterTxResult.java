@@ -10,4 +10,7 @@ public class PostRegisterTxResult {
 
     @SerializedName("deliver_tx")
     private DeliverTx deliverTx;
+
+    private String hash;
+    private String height;
 }

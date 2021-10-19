@@ -39,6 +39,7 @@ import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
 import org.bouncycastle.jce.interfaces.ECPrivateKey;
 import org.bouncycastle.jce.interfaces.ECPublicKey;
+import org.bouncycastle.util.encoders.Hex;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
@@ -140,6 +141,7 @@ public class AmoStorageUploadProcessor extends AbstractProcessor {
                 previousProcessorName.equals("AmoMarketSaveProcessor"))) {
             throw new InvalidIncomingProcessorException("Invalid Incoming Processor");
         }
+
         String privateKeyString = context.getProperty(PROP_PRIVATE_KEY).evaluateAttributeExpressions(flowFile).getValue();
 
         // TODO session.exportTO가 정상적으로 동작하지 않을 시, 사용한다.
@@ -155,9 +157,7 @@ public class AmoStorageUploadProcessor extends AbstractProcessor {
             session.exportTo(flowFile, outputStream);
             final String content = outputStream.toString("UTF-8");
 
-            byte[] privateKey32Bytes = ECDSA.getPrivateKey32Bytes(privateKeyString);
-            ECPrivateKey ecPrivateKey = (ECPrivateKey) ECDSA.generateECDSAPrivateKey(privateKey32Bytes);
-
+            ECPrivateKey ecPrivateKey = (ECPrivateKey) ECDSA.generateECDSAPrivateKey(Hex.decode(privateKeyString));
             BCECPublicKey publicKey = (BCECPublicKey) ECDSA.getPublicKeyFromPrivateKey(ecPrivateKey);
             byte[] publicKey65Bytes = ECDSA.convertPubicKeyTo65Bytes(publicKey);
 

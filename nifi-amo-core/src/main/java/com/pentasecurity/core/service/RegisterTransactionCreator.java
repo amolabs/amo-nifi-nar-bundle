@@ -60,13 +60,13 @@ public class RegisterTransactionCreator extends TransactionCreator implements Tr
         map.put("parcelId", parcelId);
 
 
-        if (StringUtils.isNotBlank(proxy_account)) {
+        if (StringUtils.isNotEmpty(proxy_account)) {
             map.put("proxy_account", proxy_account);
         }
-        if (StringUtils.isNotBlank(custody)) {
+        if (StringUtils.isNotEmpty(custody)) {
             map.put("custody", custody);
         }
-        if (StringUtils.isNotBlank(extraInfo)) {
+        if (StringUtils.isNotEmpty(extraInfo)) {
             map.put("extraInfo", extraInfo);
         }
         return createTx(Transaction.TxType.register, sender, fee, last_height, map);

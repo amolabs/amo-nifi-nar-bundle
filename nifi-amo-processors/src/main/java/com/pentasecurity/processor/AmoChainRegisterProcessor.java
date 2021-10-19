@@ -35,6 +35,9 @@ import org.apache.nifi.logging.ComponentLog;
 import org.apache.nifi.processor.*;
 import org.apache.nifi.processor.exception.ProcessException;
 import org.apache.nifi.processor.util.StandardValidators;
+import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
+import org.bouncycastle.jce.interfaces.ECPrivateKey;
+import org.bouncycastle.util.encoders.Hex;
 
 import java.math.BigInteger;
 import java.util.*;
@@ -54,6 +57,7 @@ public class AmoChainRegisterProcessor extends AbstractProcessor {
      * - sign된 Register TX를 AMO 체인에 전송한다.
      */
     public static final String PRIVATE_KEY = "#{auth.private.key}";
+    public static final String PARCEL_ID = "${parcel.id}";
 
     // TODO 사용자가 임의로 수정 불가능하도록 하는 방법은?
     public static final PropertyDescriptor PROP_PRIVATE_KEY = new PropertyDescriptor.Builder()
@@ -64,6 +68,16 @@ public class AmoChainRegisterProcessor extends AbstractProcessor {
             .required(true)
             .sensitive(true)
             .defaultValue(PRIVATE_KEY)
+            .build();
+
+    public static final PropertyDescriptor PROP_PARCEL_ID = new PropertyDescriptor.Builder()
+            .name("parcel-id")
+            .displayName("Parcel ID")
+            .description("Specifies a parcel for register")
+            .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
+            .required(true)
+            .sensitive(false)
+            .defaultValue(PARCEL_ID)
             .build();
 
     public static final Relationship REL_SUCCESS = new Relationship.Builder()
@@ -89,6 +103,7 @@ public class AmoChainRegisterProcessor extends AbstractProcessor {
     protected void init(final ProcessorInitializationContext context) {
         final List<PropertyDescriptor> descriptors = new ArrayList<>();
         descriptors.add(PROP_PRIVATE_KEY);
+        descriptors.add(PROP_PARCEL_ID);
 
         this.descriptors = Collections.unmodifiableList(descriptors);
 
@@ -121,31 +136,37 @@ public class AmoChainRegisterProcessor extends AbstractProcessor {
             return;
         }
 
-        String previousProcessorName = flowFile.getAttribute("previous.processor.name");
-        if (!previousProcessorName.equals("AmoStorageUploadProcessor")) {
-            throw new InvalidIncomingProcessorException("Invalid Incoming Processor");
-        }
+//        String previousProcessorName = flowFile.getAttribute("previous.processor.name");
+//        if (!previousProcessorName.equals("AmoStorageUploadProcessor")) {
+//            throw new InvalidIncomingProcessorException("Invalid Incoming Processor");
+//        }
 
         /**
-         * - TX 생성(ㅇ)
-         * - TX Sign(ㅇ)
+         * - TX 생성
+         * - TX Sign
          * - TX 전송
          * - FlowFile을 transfer한다.
          */
         try {
             String privateKeyString = context.getProperty(PROP_PRIVATE_KEY).evaluateAttributeExpressions(flowFile).getValue();
+            String parcelId = context.getProperty(PROP_PARCEL_ID).evaluateAttributeExpressions(flowFile).getValue();
+            logger.info("# parcel ID: " + parcelId);
+
             byte[] privateKey32Bytes = ECDSA.getPrivateKey32Bytes(privateKeyString);
             byte[] publicKey65Bytes = ECDSA.getPublicKey65Bytes(privateKeyString);
+
             int latestBlockHeight = Integer.parseInt(AmoChainCommunicator.getLatestBlockHeight());
             String sender = ECDSA.getAddressFromPrivateKeyString(privateKeyString);
+            logger.info("# sender: " + sender);
             final BigInteger fee = new BigInteger("0");
-            String parcelID = flowFile.getAttribute("parcel.id");
 
+
+            // TODO parcelID 검증 필요(비어있는지, 올바른 형식인지)
             RegisterTransactionCreator registerTransactionCreator = new RegisterTransactionCreator();
             Transaction amoTx = null;
-            amoTx = registerTransactionCreator.createRegisterTx(sender, fee, latestBlockHeight, parcelID, null, null, null);
-            String signedTx = registerTransactionCreator.create(privateKey32Bytes, publicKey65Bytes, amoTx);
-            logger.info("#### signed tx : " + signedTx);
+            amoTx = registerTransactionCreator.createRegisterTx(sender, fee, latestBlockHeight, parcelId, null, null, null);
+            String signedTx = registerTransactionCreator.create(privateKey32Bytes, publicKey65Bytes , amoTx);
+            logger.info("# signed tx : " + signedTx);
 
             AmoChainCommunicator.requestRegisterTx(signedTx);
 
@@ -154,7 +175,7 @@ public class AmoChainRegisterProcessor extends AbstractProcessor {
             session.transfer(flowFile, REL_SUCCESS);
         } catch (Exception e) {
             session.rollback();
-            logger.error("Register Tx Processor Error happened: {}", e.getCause());
+            logger.error("Register Tx Processor Error happened: {}", e.getMessage());
             throw new ProcessException(e.getMessage());
         }
     }

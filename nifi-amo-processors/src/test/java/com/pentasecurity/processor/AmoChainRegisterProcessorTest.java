@@ -32,21 +32,22 @@ import java.util.List;
 import static org.junit.Assert.assertTrue;
 
 
-public class AmoStorageUploadProcessorTest {
+public class AmoChainRegisterProcessorTest {
 
     private TestRunner testRunner;
 
     @Before
     public void init() {
-        testRunner = TestRunners.newTestRunner(AmoStorageUploadProcessor.class);
+        testRunner = TestRunners.newTestRunner(AmoChainRegisterProcessor.class);
     }
 
     @Test
     public void testProcessor() throws NoSuchAlgorithmException {
-        InputStream content = new ByteArrayInputStream("{\"hello\":\"nifi rocks\"}".getBytes());
-        TestRunner runner = TestRunners.newTestRunner(new AmoStorageUploadProcessor());
+        InputStream content = new ByteArrayInputStream("{\"contents\":\"not use\"}".getBytes());
+        TestRunner runner = TestRunners.newTestRunner(new AmoChainRegisterProcessor());
         runner.setValidateExpressionUsage(false);
-        runner.setProperty(AmoStorageUploadProcessor.PROP_PRIVATE_KEY, "269d46c9cfafe86be88fea3887422b520f7a9e8db829c2f8582200806e8d337a");
+        runner.setProperty(AmoChainRegisterProcessor.PROP_PRIVATE_KEY, "269d46c9cfafe86be88fea3887422b520f7a9e8db829c2f8582200806e8d337a");
+        runner.setProperty(AmoChainRegisterProcessor.PROP_PARCEL_ID, "00000001199F8E29A5A47543089BF2C13DD23C1915C6BAC5FF4DF56B60BE2EFB26B960D4");
 
         runner.enqueue(content);
         runner.run(1);
@@ -56,11 +57,13 @@ public class AmoStorageUploadProcessorTest {
         assertTrue("1 match", results.size() == 1);
 
         MockFlowFile result = results.get(0);
+        String resultValue = new String(runner.getContentAsByteArray(result));
+
+        System.out.println(resultValue);
 
         System.out.println("Match: " + IOUtils.toString(runner.getContentAsByteArray(result), "UTF-8"));
 
-        result.assertContentEquals("{\"hello\":\"nifi rocks\"}");
-
+        result.assertContentEquals("{\"contents\":\"not use\"}");
     }
 
 }

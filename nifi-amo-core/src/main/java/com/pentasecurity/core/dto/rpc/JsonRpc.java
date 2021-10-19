@@ -2,16 +2,13 @@ package com.pentasecurity.core.dto.rpc;
 
 import com.google.gson.annotations.SerializedName;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 @AllArgsConstructor
-public class JsonRpc {
-    public JsonRpc(){}
-    @SerializedName("jsonrpc")
+@Getter
+public class JsonRpc<T> {
+    private T params;
     private String jsonrpc;
-
-    @SerializedName("id")
     private String id;
-
-    @SerializedName("method")
     private String method;
 }

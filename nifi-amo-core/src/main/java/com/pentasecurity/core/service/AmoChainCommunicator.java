@@ -1,9 +1,11 @@
 package com.pentasecurity.core.service;
 
+import com.google.gson.Gson;
 import com.pentasecurity.core.dto.chain.GrantTxResponse;
 import com.pentasecurity.core.dto.chain.RegisterTxResponse;
 import com.pentasecurity.core.dto.chain.StatusResponse;
 import com.pentasecurity.core.dto.rpc.*;
+import com.pentasecurity.core.exception.RegisterTxException;
 import com.pentasecurity.core.helper.RetrofitInitializer;
 import lombok.extern.slf4j.Slf4j;
 import retrofit2.Response;
@@ -31,28 +33,28 @@ public class AmoChainCommunicator {
         return result.getPostStatusResult().getSyncInfo().getLatestBlockHeight();
     }
 
-    public static boolean requestRegisterTx(String signedTx) {
-        RegisterTxResponse result = null;
-        try {
-            Response<RegisterTxResponse> response = httpRequestor.postRegisterTx(
-                    new RegisterTxRpc(new ParamsRegisterTx(new Tx(signedTx)), "2.0", "broadcast_tx_commit", "broadcast_tx_commit")
-            ).execute();
-            result = response.body();
-        } catch (IOException e) {
-            log.error("request post register tx error happened: {}", e.getMessage());
-            throw new RuntimeException("request post register tx error happened");
-        }
+    public static void requestRegisterTx(String signedTx) throws IOException {
+        RegisterTxResponse result;
+        RegisterTxRpc registerTxRpc = new RegisterTxRpc(new ParamsRegisterTx(signedTx), "2.0", "broadcast_tx_commit", "broadcast_tx_commit");
+        Response<RegisterTxResponse> response = httpRequestor.postRegisterTx(registerTxRpc).execute();
 
-        return result.getPostRegisterTxResult().getCheckTx().getCode() == 0 &&
-                result.getPostRegisterTxResult().getDeliverTx().getCode() == 0;
+        result = response.body();
+        log.info("# TX hash: " + result.getPostRegisterTxResult().getHash());
+
+        if (result.getPostRegisterTxResult().getCheckTx().getCode() != 0 ||
+                result.getPostRegisterTxResult().getDeliverTx().getCode() != 0) {
+            throw new RegisterTxException(
+                    "CheckTx log: " + result.getPostRegisterTxResult().getCheckTx().getLog() +
+                            ", DeliverTx log: " + result.getPostRegisterTxResult().getDeliverTx().getLog());
+        }
     }
 
     public static boolean requestGrantTx(String signedTx) {
         GrantTxResponse result = null;
         try {
-            Response<GrantTxResponse> response = httpRequestor.postGrantTx(
-                    new RegisterTxRpc(new ParamsRegisterTx(new Tx(signedTx)), "2.0", "broadcast_tx_commit", "broadcast_tx_commit")
-            ).execute();
+            RegisterTxRpc registerTxRpc = new RegisterTxRpc<>(new ParamsRegisterTx("aaaaa"),
+                    "2.0", "broadcast_tx_commit", "broadcast_tx_commit");
+            Response<GrantTxResponse> response = httpRequestor.postGrantTx(registerTxRpc).execute();
             result = response.body();
         } catch (IOException e) {
             log.error("request post register tx error happened: {}", e.getMessage());

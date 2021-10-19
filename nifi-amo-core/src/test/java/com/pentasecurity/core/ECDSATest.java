@@ -75,19 +75,15 @@ public class ECDSATest {
 
     @Test
     public void getPublicKeyFromPrivateKeyTest() throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchProviderException, InvalidKeySpecException, IOException {
-        BCECPrivateKey privateKey = (BCECPrivateKey) ECDSA.getPrivateKeyFromHexString(testPrivateKey);
-        BCECPublicKey publicKey = (BCECPublicKey) ECDSA.getPublicKeyFromPrivateKey(privateKey);
 
-        BCECPublicKey publicKeyNew = (BCECPublicKey) ECDSA.getPublicKey(publicKey.getEncoded());
+        byte[] publicKey65Bytes = ECDSA.getPublicKey65Bytes(testPrivateKey);
 
-        byte[] publicKey65Bytes = ECDSA.convertPubicKeyTo65Bytes(publicKeyNew);
-
-
-        assertThat(CryptoUtils.bytesToHex(publicKey65Bytes), is(testPublicKey));
+        System.out.println(CryptoUtils.bytesToHex(publicKey65Bytes));
+//        assertThat(CryptoUtils.bytesToHex(publicKey65Bytes), is(testPublicKey));
     }
 
     @Test
-    public void getAddressFromPublicKeyTest() throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchProviderException, InvalidKeySpecException {
+    public void getAddressFromPublicKeyTest() throws NoSuchAlgorithmException, NoSuchProviderException, InvalidKeySpecException, IOException {
         BCECPrivateKey privateKey = (BCECPrivateKey) ECDSA.getPrivateKeyFromHexString(testPrivateKey);
         BCECPublicKey publicKey = (BCECPublicKey) ECDSA.getPublicKeyFromPrivateKey(privateKey);
 
@@ -97,6 +93,12 @@ public class ECDSATest {
         System.out.println(address);
     }
 
+    @Test
+    public void getAddressFromPrivateKeyStringTest() throws NoSuchAlgorithmException, NoSuchProviderException, InvalidKeySpecException, IOException {
+        String sender = ECDSA.getAddressFromPrivateKeyString(testPrivateKey);
+
+        System.out.println(sender);
+    }
     @Test
     public void signTest() throws InvalidKeySpecException, NoSuchAlgorithmException, IOException, SignatureException, InvalidKeyException, NoSuchProviderException {
         // TODO

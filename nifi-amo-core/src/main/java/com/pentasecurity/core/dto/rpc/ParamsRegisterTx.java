@@ -6,5 +6,5 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class ParamsRegisterTx {
     @SerializedName("tx")
-    private Tx tx;
+    private String tx;
 }

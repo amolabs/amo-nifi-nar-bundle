@@ -5,4 +5,5 @@ import lombok.Getter;
 @Getter
 public class CheckTx {
     private int code;
+    private String log;
 }

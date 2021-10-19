@@ -5,4 +5,5 @@ import lombok.Getter;
 @Getter
 public class DeliverTx {
     private int code;
+    private String log;
 }

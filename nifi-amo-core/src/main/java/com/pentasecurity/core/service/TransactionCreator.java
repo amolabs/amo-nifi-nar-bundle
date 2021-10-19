@@ -33,10 +33,13 @@ public abstract class TransactionCreator {
         switch (type) {
             case register:
                 payload.setTarget((String) map.get("parcelId"));
-                payload.setCustody((String) map.get("custody"));
+
+                if (map.containsKey("custody")) {
+                    payload.setCustody((String) map.get("custody"));
+                }
 
                 if (map.containsKey("proxy_account")) {
-                    payload.setProxyAccount("");
+                    payload.setProxyAccount((String) map.get("proxy_account"));
                 }
 
                 if (map.containsKey("extraInfo")) {

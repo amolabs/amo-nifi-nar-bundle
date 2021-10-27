@@ -41,7 +41,8 @@ public class AmoStorageUploadProcessorTest {
         testRunner = TestRunners.newTestRunner(AmoStorageUploadProcessor.class);
     }
 
-    @Test
+    // 테스트 할때는 주석 해제, 빌드 시에는 주석 처리
+//    @Test
     public void testProcessor() throws NoSuchAlgorithmException {
         InputStream content = new ByteArrayInputStream("{\"hello\":\"nifi rocks\"}".getBytes());
         TestRunner runner = TestRunners.newTestRunner(new AmoStorageUploadProcessor());

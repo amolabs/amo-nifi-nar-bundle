@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Getter;
 
 @Getter
-public class StatusResponse {
+public class StorageResponse {
     @SerializedName("result")
-    private StatusResult statusResult;
+    private StorageResult storageResult;
 }

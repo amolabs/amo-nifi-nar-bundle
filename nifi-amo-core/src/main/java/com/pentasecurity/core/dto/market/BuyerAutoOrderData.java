@@ -6,7 +6,7 @@ import java.util.List;
 
 @Getter
 public class BuyerAutoOrderData {
-    private long orderId;
+    private long autoOrderId;
     private long buyerId;
     private long sellerId;
     private long productId;

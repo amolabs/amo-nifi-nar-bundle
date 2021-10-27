@@ -177,7 +177,7 @@ public class AmoAutoDownloadProcessor extends AbstractProcessor {
                             storageAccessToken, publicKey65Bytes, signature);
 
                     // 마켓 서버의 주문의 isDownloaded의 값을 true로 업데이트
-                    MarketCommunicator.requestPatchOrder(authorization, buyerAutoOrder.getOrderId());
+                    MarketCommunicator.requestPatchOrder(authorization, buyerAutoOrder.getAutoOrderId());
 
 
                     flowFile = session.create();

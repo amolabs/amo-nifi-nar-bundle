@@ -142,10 +142,10 @@ public class AmoAutoRequestProcessor extends AbstractProcessor {
                 long buyerId2 = autoOrder.getBuyerId();
                 long sellerId = autoOrder.getSellerId();
                 long productId = autoOrder.getProductId();
-                long orderId = autoOrder.getOrderId();
+                long autoOrderId = autoOrder.getAutoOrderId();
 
                 List<AutoOrderFileData> autoOrderFiles =
-                        MarketCommunicator.requestGetAutoOrderFiles(authorization, orderId);
+                        MarketCommunicator.requestGetAutoOrderFiles(authorization, autoOrderId);
 
                 for (AutoOrderFileData file : autoOrderFiles) {
                     // 주문(Request TX 요청)
@@ -153,13 +153,12 @@ public class AmoAutoRequestProcessor extends AbstractProcessor {
                     MarketCommunicator.requestPostOrderFile(authorization, buyerId2, sellerId, productId, fileId);
 
                     flowFile = session.create();
-                    session.transfer(flowFile, REL_SUCCESS);
+
+                    session.remove(flowFile);
                 }
             }
-            
-            session.commit();
         } catch (Exception e) {
-            logger.error("Auto Request Processor error happened: {}", e.getCause());
+            logger.error("Auto Request Processor error happened: {}", e.getMessage());
         }
     }
 }

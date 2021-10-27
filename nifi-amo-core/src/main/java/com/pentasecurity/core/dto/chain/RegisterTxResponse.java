@@ -6,5 +6,5 @@ import lombok.Getter;
 @Getter
 public class RegisterTxResponse {
     @SerializedName("result")
-    private PostRegisterTxResult postRegisterTxResult;
+    private RegisterTxResult registerTxResult;
 }

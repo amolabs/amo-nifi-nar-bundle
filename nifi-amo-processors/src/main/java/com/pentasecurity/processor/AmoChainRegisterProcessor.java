@@ -16,11 +16,16 @@
  */
 package com.pentasecurity.processor;
 
+import com.google.gson.Gson;
 import com.pentasecurity.core.crypto.ECDSA;
+import com.pentasecurity.core.dto.chain.StorageInfo;
+import com.pentasecurity.core.dto.chain.StorageResponse;
 import com.pentasecurity.core.dto.chain.Transaction;
 import com.pentasecurity.core.exception.InvalidIncomingProcessorException;
+import com.pentasecurity.core.exception.NotMatchStorageOwnerException;
 import com.pentasecurity.core.service.AmoChainCommunicator;
 import com.pentasecurity.core.service.RegisterTransactionCreator;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.nifi.annotation.behavior.ReadsAttribute;
 import org.apache.nifi.annotation.behavior.ReadsAttributes;
 import org.apache.nifi.annotation.behavior.WritesAttribute;
@@ -37,12 +42,13 @@ import org.apache.nifi.processor.exception.ProcessException;
 import org.apache.nifi.processor.util.StandardValidators;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
 import org.bouncycastle.jce.interfaces.ECPrivateKey;
+import org.bouncycastle.util.encoders.Base64;
 import org.bouncycastle.util.encoders.Hex;
 
 import java.math.BigInteger;
 import java.util.*;
 
-@Tags({"AMO Custom Processor for AMO Blockchain"})
+@Tags({"AMO Custom Processor for AMO Blockchain01"})
 @CapabilityDescription("Provide a description")
 @SeeAlso({})
 @ReadsAttributes({@ReadsAttribute(attribute="", description="")})
@@ -136,10 +142,10 @@ public class AmoChainRegisterProcessor extends AbstractProcessor {
             return;
         }
 
-//        String previousProcessorName = flowFile.getAttribute("previous.processor.name");
-//        if (!previousProcessorName.equals("AmoStorageUploadProcessor")) {
-//            throw new InvalidIncomingProcessorException("Invalid Incoming Processor");
-//        }
+        String previousProcessorName = flowFile.getAttribute("previous.processor.name");
+        if (!previousProcessorName.equals("AmoStorageUploadProcessor")) {
+            throw new InvalidIncomingProcessorException("Invalid Incoming Processor");
+        }
 
         /**
          * - TX 생성
@@ -150,6 +156,7 @@ public class AmoChainRegisterProcessor extends AbstractProcessor {
         try {
             String privateKeyString = context.getProperty(PROP_PRIVATE_KEY).evaluateAttributeExpressions(flowFile).getValue();
             String parcelId = context.getProperty(PROP_PARCEL_ID).evaluateAttributeExpressions(flowFile).getValue();
+
             logger.info("# parcel ID: " + parcelId);
 
             byte[] privateKey32Bytes = ECDSA.getPrivateKey32Bytes(privateKeyString);
@@ -174,7 +181,6 @@ public class AmoChainRegisterProcessor extends AbstractProcessor {
             session.putAttribute(flowFile, "previous.processor.name", "AmoChainRegisterProcessor");
             session.transfer(flowFile, REL_SUCCESS);
         } catch (Exception e) {
-            session.rollback();
             logger.error("Register Tx Processor Error happened: {}", e.getMessage());
             throw new ProcessException(e.getMessage());
         }

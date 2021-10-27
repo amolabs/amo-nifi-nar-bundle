@@ -1,9 +1,11 @@
 package com.pentasecurity.core.service;
 
+import com.google.gson.Gson;
 import com.pentasecurity.core.dto.market.*;
 import com.pentasecurity.core.helper.RetrofitInitializer;
 
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.ResponseBody;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 
@@ -22,6 +24,7 @@ public class MarketCommunicator {
             result = response.body();
         } catch (IOException e) {
             log.error("request login error happened: {}", e.getMessage());
+            throw new RuntimeException(e);
         }
         return result.getData().getAccessToken();
     }
@@ -29,10 +32,23 @@ public class MarketCommunicator {
     public static void requestSaveParcel(String accessToken, String parcelId, long productId, String price) {
         String authorization = "Bearer " + accessToken;
         try {
-            httpRequestor.postParcels(productId, authorization, new SaveParcelRequest(parcelId,productId, price))
+            Response<ParcelResponse> response = httpRequestor.postParcels(productId, authorization, new SaveParcelRequest(parcelId,productId, price))
                     .execute();
-        } catch (IOException e) {
+            ParcelResponse result = response.body();
+            ResponseBody error = response.errorBody();
+
+            if (error != null) {
+                Gson gson = new Gson();
+                ParcelErrorResponse errorResult = gson.fromJson(error.string(), ParcelErrorResponse.class);
+                if (errorResult != null && !errorResult.isSuccess()) {
+                    throw new Exception(errorResult.getMessage());
+                }
+            }
+
+            log.info("# response file ID: {}", result.getData().getFileId());
+        } catch (Exception e) {
             log.error("request save parcel error happened: {}", e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 
@@ -40,21 +56,24 @@ public class MarketCommunicator {
         BuyerAutoOrderResponse result = null;
         try {
             Response<BuyerAutoOrderResponse> response = httpRequestor.getBuyerAutoOrders(authorization, buyerId).execute();
+
             result = response.body();
         } catch (IOException e) {
             log.error("request buyer's auto orders error happened: {}", e.getMessage());
+            throw new RuntimeException(e);
         }
 
         return result.getData();
     }
 
-    public static List<AutoOrderFileData> requestGetAutoOrderFiles(String authorization, long orderId) {
+    public static List<AutoOrderFileData> requestGetAutoOrderFiles(String authorization, long autoOrderId) {
         AutoOrderFileResponse result = null;
         try {
-            Response<AutoOrderFileResponse> response = httpRequestor.getAutoOrderFiles(authorization, orderId).execute();
+            Response<AutoOrderFileResponse> response = httpRequestor.getAutoOrderFiles(authorization, autoOrderId).execute();
             result = response.body();
         } catch (IOException e) {
             log.error("request auto order's files error happened: {}", e.getMessage());
+            throw new RuntimeException(e);
         }
 
         return result.getData();
@@ -70,6 +89,7 @@ public class MarketCommunicator {
                     new OrderFileRequest(buyerId, sellerId, productId, fileId, "AUTO")).execute();
         } catch (IOException e) {
             log.error("request order file error happened: {}", e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 
@@ -80,6 +100,7 @@ public class MarketCommunicator {
             result = response.body();
         } catch (IOException e) {
             log.error("request seller's auto orders error happened: {}", e.getMessage());
+            throw new RuntimeException(e);
         }
 
         return result.getData();
@@ -91,6 +112,7 @@ public class MarketCommunicator {
                     new PatchOrderRequest(orderId, "ORDER_GRANT")).execute();
         } catch (IOException e) {
             log.error("request patch order error happened: {}", e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 }

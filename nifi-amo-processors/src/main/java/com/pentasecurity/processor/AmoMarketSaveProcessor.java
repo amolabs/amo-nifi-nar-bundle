@@ -50,6 +50,7 @@ public class AmoMarketSaveProcessor extends AbstractProcessor {
     public static final String LOGIN_ID = "#{login.id}";
     public static final String LOGIN_PASSWORD = "#{login.password}";
     public static final String PRODUCT_ID = "#{product.id}";
+    public static final String PARCEL_ID = "${parcel.id}";
     public static final String PARCEL_PRICE = "#{parcel.price}";
 
     public static final PropertyDescriptor PROP_LOGIN_ID = new PropertyDescriptor.Builder()
@@ -58,7 +59,7 @@ public class AmoMarketSaveProcessor extends AbstractProcessor {
             .description("Specifies a login id for authentication")
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
             .required(true)
-            .sensitive(true)
+            .sensitive(false)
             .defaultValue(LOGIN_ID)
             .build();
 
@@ -78,8 +79,18 @@ public class AmoMarketSaveProcessor extends AbstractProcessor {
             .description("Specifies a product id for parcel")
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
             .required(true)
-            .sensitive(true)
+            .sensitive(false)
             .defaultValue(PRODUCT_ID)
+            .build();
+
+    public static final PropertyDescriptor PROP_PARCEL_ID = new PropertyDescriptor.Builder()
+            .name("parcel-id")
+            .displayName("Parcel ID")
+            .description("Specifies a parcel for register")
+            .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
+            .required(true)
+            .sensitive(false)
+            .defaultValue(PARCEL_ID)
             .build();
 
     public static final PropertyDescriptor PROP_PARCEL_PRICE = new PropertyDescriptor.Builder()
@@ -88,7 +99,7 @@ public class AmoMarketSaveProcessor extends AbstractProcessor {
             .description("Specifies price for parcel")
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
             .required(true)
-            .sensitive(true)
+            .sensitive(false)
             .defaultValue(PARCEL_PRICE)
             .build();
 
@@ -117,6 +128,7 @@ public class AmoMarketSaveProcessor extends AbstractProcessor {
         descriptors.add(PROP_LOGIN_ID);
         descriptors.add(PROP_LOGIN_PASSWORD);
         descriptors.add(PROP_PRODUCT_ID);
+        descriptors.add(PROP_PARCEL_ID);
         descriptors.add(PROP_PARCEL_PRICE);
 
         this.descriptors = Collections.unmodifiableList(descriptors);
@@ -155,21 +167,27 @@ public class AmoMarketSaveProcessor extends AbstractProcessor {
             throw new InvalidIncomingProcessorException("Invalid Incoming Processor");
         }
 
-        String loginId = context.getProperty(PROP_LOGIN_ID).getValue();
-        String loginPassword = context.getProperty(PROP_LOGIN_PASSWORD).getValue();
-        long productId = Long.parseLong(context.getProperty(PROP_PRODUCT_ID).getValue());
-        String parcelPrice = context.getProperty(PROP_PARCEL_PRICE).getValue();
-        String parcelId = flowFile.getAttribute("parcel.id");
+        String loginId = context.getProperty(PROP_LOGIN_ID).evaluateAttributeExpressions(flowFile).getValue();
+        String loginPassword = context.getProperty(PROP_LOGIN_PASSWORD).evaluateAttributeExpressions(flowFile).getValue();
+        long productId = Long.parseLong(context.getProperty(PROP_PRODUCT_ID).evaluateAttributeExpressions(flowFile).getValue());
+        String parcelPrice = context.getProperty(PROP_PARCEL_PRICE).evaluateAttributeExpressions(flowFile).getValue();
+        String parcelId = context.getProperty(PROP_PARCEL_ID).evaluateAttributeExpressions(flowFile).getValue();
 
+        logger.info("# login ID: " + loginId);
+        logger.info("# login Password: " + loginPassword);
+        logger.info("# product ID: " + productId);
+        logger.info("# parcel Price: " + parcelPrice);
+        logger.info("# parcel ID: " + parcelId);
         try {
             String accessToken = MarketCommunicator.requestLogin(loginId, loginPassword);
+            logger.info("# accessToken: " + accessToken);
             MarketCommunicator.requestSaveParcel(accessToken, parcelId, productId, parcelPrice);
 
             session.putAttribute(flowFile, "previous.processor.name", "AmoMarketSaveProcessor");
             session.transfer(flowFile, REL_SUCCESS);
         } catch (Exception e) {
             session.rollback();
-            logger.error("Register Tx Processor Error happened: {}", e.getCause());
+            logger.error("Save Product Parcel info Processor Error happened: " + e.getMessage());
             throw new ProcessException(e.getMessage());
         }
 

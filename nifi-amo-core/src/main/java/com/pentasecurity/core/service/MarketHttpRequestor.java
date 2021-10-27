@@ -9,16 +9,16 @@ public interface MarketHttpRequestor {
     Call<LoginResponse> login(@Body LoginRequest body);
 
     @POST("products/{product-id}/files")
-    Call<Void> postParcels(@Path("product-id") long productId, @Header("Authorization") String token,
+    Call<ParcelResponse> postParcels(@Path("product-id") long productId, @Header("Authorization") String token,
                            @Body SaveParcelRequest body);
 
     @GET("buyers/{buyer-id}/auto-orders")
     Call<BuyerAutoOrderResponse> getBuyerAutoOrders(@Header("Authorization") String token,
                                                     @Path("buyer-id") long buyerId);
 
-    @GET("auto-orders/{order-id}/files")
+    @GET("auto-orders/{auto-order-id}/files")
     Call<AutoOrderFileResponse> getAutoOrderFiles(@Header("Authorization") String token,
-                                                  @Path("order-id") long orderId);
+                                                  @Path("auto-order-id") long autoOrderId);
 
     @POST("orders")
     Call<Void> postOrderFile(@Header("Authorization") String token, @Body OrderFileRequest body);

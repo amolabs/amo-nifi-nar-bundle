@@ -6,5 +6,5 @@ import lombok.Getter;
 @Getter
 public class GrantTxResponse {
     @SerializedName("result")
-    private PostGrantTxResult postGrantTxResult;
+    private GrantTxResult grantTxResult;
 }

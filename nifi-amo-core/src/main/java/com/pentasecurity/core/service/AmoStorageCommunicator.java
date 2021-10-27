@@ -31,6 +31,7 @@ public class AmoStorageCommunicator {
 
         } catch (IOException e) {
             log.error("request post auth error happened: {}", e.getMessage());
+            throw new RuntimeException(e);
         }
         return result.getToken();
     }
@@ -70,6 +71,7 @@ public class AmoStorageCommunicator {
 
         } catch (IOException e) {
             log.error("request post parcels error happened: {}", e.getMessage());
+            throw new RuntimeException(e);
         }
 
         return result.getParcelId();
@@ -93,6 +95,7 @@ public class AmoStorageCommunicator {
 
         } catch (IOException e) {
             log.error("request get download parcel error happened: {}", e.getMessage());
+            throw new RuntimeException(e);
         }
 
         return result.getData();

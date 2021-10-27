@@ -16,7 +16,6 @@
  */
 package com.pentasecurity.processor;
 
-import com.pentasecurity.core.utils.CryptoUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.nifi.util.MockFlowFile;
 import org.apache.nifi.util.TestRunner;
@@ -32,41 +31,28 @@ import java.util.List;
 import static org.junit.Assert.assertTrue;
 
 
-public class AmoChainRegisterProcessorTest {
+public class AmoAutoRequestProcessorTest {
 
     private TestRunner testRunner;
 
     @Before
     public void init() {
-        testRunner = TestRunners.newTestRunner(AmoChainRegisterProcessor.class);
+        testRunner = TestRunners.newTestRunner(AmoAutoRequestProcessor.class);
     }
 
     // 테스트 할때는 주석 해제, 빌드 시에는 주석 처리
-//    @Test
+    @Test
     public void testProcessor() throws NoSuchAlgorithmException {
-        InputStream content = new ByteArrayInputStream("{\"contents\":\"not use\"}".getBytes());
-        TestRunner runner = TestRunners.newTestRunner(new AmoChainRegisterProcessor());
+//        InputStream content = new ByteArrayInputStream("{\"contents\":\"not use\"}".getBytes());
+        TestRunner runner = TestRunners.newTestRunner(new AmoAutoRequestProcessor());
         runner.setValidateExpressionUsage(false);
-        runner.setProperty(AmoChainRegisterProcessor.PROP_PRIVATE_KEY,
-                "269d46c9cfafe86be88fea3887422b520f7a9e8db829c2f8582200806e8d337a");
-        runner.setProperty(AmoChainRegisterProcessor.PROP_PARCEL_ID,
-                "00000001E68EB37B9A00F3220C3486E691E15B65CDB8AE72A2C2480EC2339D969ECD8242");
+        runner.setProperty(AmoMarketSaveProcessor.PROP_LOGIN_ID, "hjs6877@gmail.com");
+        runner.setProperty(AmoMarketSaveProcessor.PROP_LOGIN_PASSWORD, "1234");
 
-        runner.enqueue(content);
+//        runner.enqueue(content);
         runner.run(1);
-        runner.assertQueueEmpty();
+//        runner.assertQueueEmpty();
 
-        List<MockFlowFile> results = runner.getFlowFilesForRelationship(AmoChainRegisterProcessor.REL_SUCCESS);
-        assertTrue("1 match", results.size() == 1);
-
-        MockFlowFile result = results.get(0);
-        String resultValue = new String(runner.getContentAsByteArray(result));
-
-        System.out.println(resultValue);
-
-        System.out.println("Match: " + IOUtils.toString(runner.getContentAsByteArray(result), "UTF-8"));
-
-        result.assertContentEquals("{\"contents\":\"not use\"}");
     }
 
 }

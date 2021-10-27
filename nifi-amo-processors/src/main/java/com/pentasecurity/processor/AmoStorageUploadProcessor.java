@@ -179,7 +179,6 @@ public class AmoStorageUploadProcessor extends AbstractProcessor {
             session.putAttribute(flowFile, "previous.processor.name", "AmoStorageUploadProcessor");
             session.transfer(flowFile, REL_SUCCESS);
         } catch (Exception e) {
-//            session.rollback();
             logger.error("Upload Processor Error happened: " + e.getMessage());
             e.printStackTrace();
             logger.error(e.getStackTrace().toString());

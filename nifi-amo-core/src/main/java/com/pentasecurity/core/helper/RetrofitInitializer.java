@@ -16,7 +16,7 @@ public class RetrofitInitializer {
             .build();
 
     private static final Retrofit retrofitMarket = new Retrofit.Builder()
-            .baseUrl("https://staging.api.market.amolabs.io/v1/")
+            .baseUrl("http://localhost:8080/v1/")
             .addConverterFactory(GsonConverterFactory.create())
             .build();
 

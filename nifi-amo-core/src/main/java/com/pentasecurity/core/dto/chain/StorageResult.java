@@ -4,7 +4,6 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Getter;
 
 @Getter
-public class PostStatusResult {
-    @SerializedName("sync_info")
-    private SyncInfo syncInfo;
+public class StorageResult {
+    private StorageResultResponse response;
 }

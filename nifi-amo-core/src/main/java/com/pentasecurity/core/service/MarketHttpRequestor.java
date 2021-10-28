@@ -27,6 +27,10 @@ public interface MarketHttpRequestor {
     Call<SellerAutoOrderResponse> getSellerAutoOrders(@Header("Authorization") String token,
                                                       @Path("seller-id") long sellerId);
 
+    @GET("sellers/{seller-id}/orders/auto-orders")
+    Call<SellerOrderResponse> getSellerOrders(@Header("Authorization") String token,
+                                                      @Path("seller-id") long sellerId);
+
     @PATCH("orders/{order-id}")
     Call<Void> patchOrder(@Header("Authorization") String token,
                           @Path("order-id") long orderId, @Body PatchOrderRequest body);

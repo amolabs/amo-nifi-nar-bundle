@@ -10,4 +10,6 @@ public class GrantTxResult {
 
     @SerializedName("deliver_tx")
     private DeliverTx deliverTx;
+
+    private String hash;
 }

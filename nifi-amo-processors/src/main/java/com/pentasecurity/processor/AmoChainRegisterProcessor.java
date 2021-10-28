@@ -143,9 +143,9 @@ public class AmoChainRegisterProcessor extends AbstractProcessor {
         }
 
         String previousProcessorName = flowFile.getAttribute("previous.processor.name");
-        if (!previousProcessorName.equals("AmoStorageUploadProcessor")) {
-            throw new InvalidIncomingProcessorException("Invalid Incoming Processor");
-        }
+//        if (!previousProcessorName.equals("AmoStorageUploadProcessor")) {
+//            throw new InvalidIncomingProcessorException("Invalid Incoming Processor");
+//        }
 
         /**
          * - TX 생성
@@ -161,7 +161,6 @@ public class AmoChainRegisterProcessor extends AbstractProcessor {
 
             byte[] privateKey32Bytes = ECDSA.getPrivateKey32Bytes(privateKeyString);
             byte[] publicKey65Bytes = ECDSA.getPublicKey65Bytes(privateKeyString);
-
             int latestBlockHeight = Integer.parseInt(AmoChainCommunicator.getLatestBlockHeight());
             String sender = ECDSA.getAddressFromPrivateKeyString(privateKeyString);
             logger.info("# sender: " + sender);

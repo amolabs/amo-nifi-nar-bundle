@@ -106,6 +106,19 @@ public class MarketCommunicator {
         return result.getData();
     }
 
+    public static List<SellerOrderData> requestGetSellerOrders(String authorization, long sellerId) {
+        SellerOrderResponse result = null;
+        try {
+            Response<SellerOrderResponse> response = httpRequestor.getSellerOrders(authorization, sellerId).execute();
+            result = response.body();
+        } catch (IOException e) {
+            log.error("request seller's orders error happened: {}", e.getMessage());
+            throw new RuntimeException(e);
+        }
+
+        return result.getData();
+    }
+
     public static void requestPatchOrder(String authorization, long orderId) {
         try {
             httpRequestor.patchOrder(authorization, orderId,

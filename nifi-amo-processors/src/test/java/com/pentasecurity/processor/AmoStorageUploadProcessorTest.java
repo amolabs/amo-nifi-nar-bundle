@@ -42,9 +42,9 @@ public class AmoStorageUploadProcessorTest {
     }
 
     // 테스트 할때는 주석 해제, 빌드 시에는 주석 처리
-//    @Test
+    @Test
     public void testProcessor() throws NoSuchAlgorithmException {
-        InputStream content = new ByteArrayInputStream("{\"hello\":\"nifi rocks\"}".getBytes());
+        InputStream content = new ByteArrayInputStream("{\"hello\":\"nifi amo storage1\"}".getBytes());
         TestRunner runner = TestRunners.newTestRunner(new AmoStorageUploadProcessor());
         runner.setValidateExpressionUsage(false);
         runner.setProperty(AmoStorageUploadProcessor.PROP_PRIVATE_KEY, "269d46c9cfafe86be88fea3887422b520f7a9e8db829c2f8582200806e8d337a");
@@ -59,8 +59,6 @@ public class AmoStorageUploadProcessorTest {
         MockFlowFile result = results.get(0);
 
         System.out.println("Match: " + IOUtils.toString(runner.getContentAsByteArray(result), "UTF-8"));
-
-        result.assertContentEquals("{\"hello\":\"nifi rocks\"}");
 
     }
 

@@ -49,10 +49,8 @@ public abstract class TransactionCreator {
                 }
                 break;
             case request:
-                // TODO implement
                 break;
             case grant:
-                // TODO implement
                 payload.setTarget((String) map.get("parcelId"));
                 payload.setCustody((String) map.get("custody"));
                 payload.setRecipient((String) map.get("recipient"));

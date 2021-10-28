@@ -61,20 +61,19 @@ public class AmoChainCommunicator {
         }
     }
 
-    public static boolean requestGrantTx(String signedTx) {
-        // TODO implement
-        GrantTxResponse result = null;
-        try {
-            JsonRpc rpc = new JsonRpc(new ParamsRegisterTx("aaaaa"),
-                    "2.0", "broadcast_tx_commit", "broadcast_tx_commit");
-            Response<GrantTxResponse> response = httpRequestor.postGrantTx(rpc).execute();
-            result = response.body();
-        } catch (IOException e) {
-            log.error("request post register tx error happened: {}", e.getMessage());
-            throw new RuntimeException("request post register tx error happened");
-        }
+    public static void requestGrantTx(String signedTx) throws IOException {
+        GrantTxResponse result;
+        JsonRpc rpc = new JsonRpc(new ParamsRegisterTx(signedTx),
+                "2.0", "broadcast_tx_commit", "broadcast_tx_commit");
+        Response<GrantTxResponse> response = httpRequestor.postGrantTx(rpc).execute();
+        result = response.body();
+        log.info("# TX hash: {}", result.getGrantTxResult().getHash());
 
-        return result.getGrantTxResult().getCheckTx().getCode() == 0 &&
-                result.getGrantTxResult().getDeliverTx().getCode() == 0;
+        if (result.getGrantTxResult().getCheckTx().getCode() != 0 ||
+                result.getGrantTxResult().getDeliverTx().getCode() != 0) {
+            throw new RegisterTxException(
+                    "CheckTx log: " + result.getGrantTxResult().getCheckTx().getLog() +
+                            ", DeliverTx log: " + result.getGrantTxResult().getDeliverTx().getLog());
+        }
     }
 }

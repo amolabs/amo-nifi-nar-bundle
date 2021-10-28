@@ -65,9 +65,9 @@ public class AmoAutoRequestProcessor extends AbstractProcessor {
             .build();
 
     public static final PropertyDescriptor PROP_LOGIN_PASSWORD = new PropertyDescriptor.Builder()
-            .name("private-key")
-            .displayName("Private Key")
-            .description("Specifies a private key for authentication")
+            .name("login-password")
+            .displayName("Login Password")
+            .description("Specifies a login password key for authentication")
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
             .required(true)
             .sensitive(true)
@@ -120,10 +120,10 @@ public class AmoAutoRequestProcessor extends AbstractProcessor {
     @Override
     public void onTrigger(final ProcessContext context, final ProcessSession session) {
         final ComponentLog logger = getLogger();
-        FlowFile flowFile = null;
+        FlowFile flowFile = session.create();
 
-        String loginId = context.getProperty(PROP_LOGIN_ID).getValue();
-        String loginPassword = context.getProperty(PROP_LOGIN_PASSWORD).getValue();
+        String loginId = context.getProperty(PROP_LOGIN_ID).evaluateAttributeExpressions(flowFile).getValue();
+        String loginPassword = context.getProperty(PROP_LOGIN_PASSWORD).evaluateAttributeExpressions(flowFile).getValue();
 
         try {
             String accessToken = MarketCommunicator.requestLogin(loginId, loginPassword);
@@ -151,12 +151,9 @@ public class AmoAutoRequestProcessor extends AbstractProcessor {
                     // 주문(Request TX 요청)
                     long fileId = file.getFileId();
                     MarketCommunicator.requestPostOrderFile(authorization, buyerId2, sellerId, productId, fileId);
-
-                    flowFile = session.create();
-
-                    session.remove(flowFile);
                 }
             }
+            session.remove(flowFile);
         } catch (Exception e) {
             logger.error("Auto Request Processor error happened: {}", e.getMessage());
         }

@@ -16,38 +16,33 @@
  */
 package com.pentasecurity.processor;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.nifi.util.MockFlowFile;
 import org.apache.nifi.util.TestRunner;
 import org.apache.nifi.util.TestRunners;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.security.NoSuchAlgorithmException;
-import java.util.List;
-
-import static org.junit.Assert.assertTrue;
 
 
-public class AmoAutoRequestProcessorTest {
+public class AmoAutoGrantProcessorTest {
 
     private TestRunner testRunner;
 
     @Before
     public void init() {
-        testRunner = TestRunners.newTestRunner(AmoAutoRequestProcessor.class);
+        testRunner = TestRunners.newTestRunner(AmoAutoGrantProcessor.class);
     }
 
     // 테스트 할때는 주석 해제, 빌드 시에는 주석 처리
     @Test
     public void testProcessor() throws NoSuchAlgorithmException {
 //        InputStream content = new ByteArrayInputStream("{\"contents\":\"not use\"}".getBytes());
-        TestRunner runner = TestRunners.newTestRunner(new AmoAutoRequestProcessor());
+        TestRunner runner = TestRunners.newTestRunner(new AmoAutoGrantProcessor());
         runner.setValidateExpressionUsage(false);
-        runner.setProperty(AmoAutoRequestProcessor.PROP_LOGIN_ID, "hjs6877@gmail.com");
-        runner.setProperty(AmoAutoRequestProcessor.PROP_LOGIN_PASSWORD, "1234");
+        runner.setProperty(AmoAutoGrantProcessor.PROP_PRIVATE_KEY,
+                "269d46c9cfafe86be88fea3887422b520f7a9e8db829c2f8582200806e8d337a");
+        runner.setProperty(AmoAutoGrantProcessor.PROP_LOGIN_ID, "hjs6877@naver.com");
+        runner.setProperty(AmoAutoGrantProcessor.PROP_LOGIN_PASSWORD, "1234");
 
 //        runner.enqueue(content);
         runner.run(1);

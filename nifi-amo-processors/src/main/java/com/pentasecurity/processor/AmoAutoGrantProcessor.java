@@ -18,8 +18,10 @@ package com.pentasecurity.processor;
 
 import com.pentasecurity.core.crypto.ECDSA;
 import com.pentasecurity.core.dto.chain.Transaction;
+import com.pentasecurity.core.dto.market.AutoOrderFileData;
 import com.pentasecurity.core.dto.market.JwtLoginPayload;
 import com.pentasecurity.core.dto.market.SellerAutoOrderData;
+import com.pentasecurity.core.dto.market.SellerOrderData;
 import com.pentasecurity.core.service.AmoChainCommunicator;
 import com.pentasecurity.core.service.GrantTransactionCreator;
 import com.pentasecurity.core.service.MarketCommunicator;
@@ -39,6 +41,7 @@ import org.apache.nifi.components.ValidationResult;
 import org.apache.nifi.flowfile.FlowFile;
 import org.apache.nifi.logging.ComponentLog;
 import org.apache.nifi.processor.*;
+import org.apache.nifi.processor.exception.ProcessException;
 import org.apache.nifi.processor.util.StandardValidators;
 
 import java.math.BigInteger;
@@ -82,9 +85,9 @@ public class AmoAutoGrantProcessor extends AbstractProcessor {
             .build();
 
     public static final PropertyDescriptor PROP_LOGIN_PASSWORD = new PropertyDescriptor.Builder()
-            .name("private-key")
-            .displayName("Private Key")
-            .description("Specifies a private key for authentication")
+            .name("login-password")
+            .displayName("Login Password")
+            .description("Specifies a login password key for authentication")
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
             .required(true)
             .sensitive(true)
@@ -144,8 +147,9 @@ public class AmoAutoGrantProcessor extends AbstractProcessor {
     @Override
     public void onTrigger(final ProcessContext context, final ProcessSession session) {
         final ComponentLog logger = getLogger();
-        FlowFile flowFile = null;
+        FlowFile flowFile = session.create();
 
+        String privateKeyString = context.getProperty(PROP_PRIVATE_KEY).evaluateAttributeExpressions(flowFile).getValue();
         String loginId = context.getProperty(PROP_LOGIN_ID).getValue();
         String loginPassword = context.getProperty(PROP_LOGIN_PASSWORD).getValue();
 
@@ -159,23 +163,23 @@ public class AmoAutoGrantProcessor extends AbstractProcessor {
             JwtLoginPayload loginPayload = (JwtLoginPayload) JsonUtils.fromJson(payload, JwtLoginPayload.class);
             long sellerId = loginPayload.getSellerId();
 
-
-            // ORDER TYPE이 AUTO인 주문 중에서 ORDER_REQUEST 상태인 주문 목록을 조회
-            List<SellerAutoOrderData> sellerAutoOrders =
-                    MarketCommunicator.requestGetSellerAutoOrders(authorization, sellerId);
-
-            String privateKeyString = context.getProperty(PROP_PRIVATE_KEY).evaluateAttributeExpressions(flowFile).getValue();
             byte[] privateKey32Bytes = ECDSA.getPrivateKey32Bytes(privateKeyString);
             byte[] publicKey65Bytes = ECDSA.getPublicKey65Bytes(privateKeyString);
             int latestBlockHeight = Integer.parseInt(AmoChainCommunicator.getLatestBlockHeight());
             String sender = ECDSA.getAddressFromPrivateKeyString(privateKeyString);
+            logger.info("# sender: " + sender);
             final BigInteger fee = new BigInteger("0");
 
-            for (SellerAutoOrderData autoOrder : sellerAutoOrders) {
-                String recipient = autoOrder.getRecipient();
-                long orderId = autoOrder.getOrderId();
-
-                for (String parcelId : autoOrder.getParcelIds()) {
+            /**
+             * Grant TX를 보낼 주문 목록을 조회
+             *  - 조건: 해당 판매자, Order Type AUTO, ORDER_REQUEST 주문
+             */
+            List<SellerOrderData> sellerOrderDataList =
+                    MarketCommunicator.requestGetSellerOrders(authorization, sellerId);
+            for (SellerOrderData sellerOrder : sellerOrderDataList) {
+                long orderId = sellerOrder.getOrderId();
+                String recipient = sellerOrder.getRecipient();
+                for (String parcelId : sellerOrder.getParcelIds()) {
                     // 주문 목록에 대해서 체인에게 GRANT TX를 요청
                     GrantTransactionCreator grantTransactionCreator = new GrantTransactionCreator();
                     Transaction amoTx = null;
@@ -188,14 +192,13 @@ public class AmoAutoGrantProcessor extends AbstractProcessor {
 
                     // 마켓 서버에게 주문 목록의 ORDER_GRANT 업데이트 요청
                     MarketCommunicator.requestPatchOrder(authorization, orderId);
-
-                    flowFile = session.create();
-                    session.transfer(flowFile, REL_SUCCESS);
                 }
             }
-            session.commit();
+
+            session.remove(flowFile);
         } catch (Exception e) {
-            logger.error("Auto Grant Processor error happened: {}", e.getCause());
+            logger.error("Auto Grant Processor error happened: {}", e.getMessage());
+            throw new ProcessException(e.getMessage());
         }
 
     }

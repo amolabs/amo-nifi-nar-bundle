@@ -18,10 +18,8 @@ package com.pentasecurity.processor;
 
 import com.pentasecurity.core.crypto.ECDSA;
 import com.pentasecurity.core.dto.chain.Transaction;
-import com.pentasecurity.core.dto.market.AutoOrderFileData;
 import com.pentasecurity.core.dto.market.JwtLoginPayload;
-import com.pentasecurity.core.dto.market.SellerAutoOrderData;
-import com.pentasecurity.core.dto.market.SellerOrderData;
+import com.pentasecurity.core.dto.market.OrderData;
 import com.pentasecurity.core.service.AmoChainCommunicator;
 import com.pentasecurity.core.service.GrantTransactionCreator;
 import com.pentasecurity.core.service.MarketCommunicator;
@@ -150,8 +148,8 @@ public class AmoAutoGrantProcessor extends AbstractProcessor {
         FlowFile flowFile = session.create();
 
         String privateKeyString = context.getProperty(PROP_PRIVATE_KEY).evaluateAttributeExpressions(flowFile).getValue();
-        String loginId = context.getProperty(PROP_LOGIN_ID).getValue();
-        String loginPassword = context.getProperty(PROP_LOGIN_PASSWORD).getValue();
+        String loginId = context.getProperty(PROP_LOGIN_ID).evaluateAttributeExpressions(flowFile).getValue();
+        String loginPassword = context.getProperty(PROP_LOGIN_PASSWORD).evaluateAttributeExpressions(flowFile).getValue();
 
         try {
             // 마켓 서버 로그인
@@ -165,18 +163,19 @@ public class AmoAutoGrantProcessor extends AbstractProcessor {
 
             byte[] privateKey32Bytes = ECDSA.getPrivateKey32Bytes(privateKeyString);
             byte[] publicKey65Bytes = ECDSA.getPublicKey65Bytes(privateKeyString);
-            int latestBlockHeight = Integer.parseInt(AmoChainCommunicator.getLatestBlockHeight());
             String sender = ECDSA.getAddressFromPrivateKeyString(privateKeyString);
             logger.info("# sender: " + sender);
             final BigInteger fee = new BigInteger("0");
+
+            int latestBlockHeight = Integer.parseInt(AmoChainCommunicator.getLatestBlockHeight());
 
             /**
              * Grant TX를 보낼 주문 목록을 조회
              *  - 조건: 해당 판매자, Order Type AUTO, ORDER_REQUEST 주문
              */
-            List<SellerOrderData> sellerOrderDataList =
+            List<OrderData> orderDataList =
                     MarketCommunicator.requestGetSellerOrders(authorization, sellerId);
-            for (SellerOrderData sellerOrder : sellerOrderDataList) {
+            for (OrderData sellerOrder : orderDataList) {
                 long orderId = sellerOrder.getOrderId();
                 String recipient = sellerOrder.getRecipient();
                 for (String parcelId : sellerOrder.getParcelIds()) {

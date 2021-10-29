@@ -19,8 +19,11 @@ package com.pentasecurity.processor;
 import com.pentasecurity.core.crypto.ECDSA;
 import com.pentasecurity.core.dto.market.BuyerAutoOrderData;
 import com.pentasecurity.core.dto.market.JwtLoginPayload;
+import com.pentasecurity.core.dto.market.OrderData;
+import com.pentasecurity.core.dto.storage.Operation;
 import com.pentasecurity.core.service.AmoStorageCommunicator;
 import com.pentasecurity.core.service.MarketCommunicator;
+import com.pentasecurity.core.utils.CryptoUtils;
 import com.pentasecurity.core.utils.JsonUtils;
 import com.pentasecurity.core.utils.JwtUtils;
 import com.pentasecurity.processor.callback.DownloadCallback;
@@ -40,7 +43,10 @@ import org.apache.nifi.processor.exception.ProcessException;
 import org.apache.nifi.processor.util.StandardValidators;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
+import org.bouncycastle.jce.interfaces.ECPrivateKey;
+import org.bouncycastle.util.encoders.Hex;
 
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Tags({"AMO Custom Processor for Auto Download"})
@@ -82,9 +88,9 @@ public class AmoAutoDownloadProcessor extends AbstractProcessor {
             .build();
 
     public static final PropertyDescriptor PROP_LOGIN_PASSWORD = new PropertyDescriptor.Builder()
-            .name("private-key")
-            .displayName("Private Key")
-            .description("Specifies a private key for authentication")
+            .name("login-password")
+            .displayName("Login Password")
+            .description("Specifies a login password key for authentication")
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
             .required(true)
             .sensitive(true)
@@ -139,10 +145,10 @@ public class AmoAutoDownloadProcessor extends AbstractProcessor {
     public void onTrigger(final ProcessContext context, final ProcessSession session) {
         final ComponentLog logger = getLogger();
         FlowFile flowFile = null;
-        // TODO implement
-        String loginId = context.getProperty(PROP_LOGIN_ID).getValue();
-        String loginPassword = context.getProperty(PROP_LOGIN_PASSWORD).getValue();
-        String privateKeyString = context.getProperty(PROP_PRIVATE_KEY).getValue();
+
+        String privateKeyString = context.getProperty(PROP_PRIVATE_KEY).evaluateAttributeExpressions(flowFile).getValue();
+        String loginId = context.getProperty(PROP_LOGIN_ID).evaluateAttributeExpressions(flowFile).getValue();
+        String loginPassword = context.getProperty(PROP_LOGIN_PASSWORD).evaluateAttributeExpressions(flowFile).getValue();
 
         try {
             // 마켓 서버 로그인
@@ -154,30 +160,32 @@ public class AmoAutoDownloadProcessor extends AbstractProcessor {
             JwtLoginPayload loginPayload = (JwtLoginPayload) JsonUtils.fromJson(payload, JwtLoginPayload.class);
             long buyerId = loginPayload.getBuyerId();
 
+            ECPrivateKey ecPrivateKey = (ECPrivateKey) ECDSA.generateECDSAPrivateKey(Hex.decode(privateKeyString));
+            BCECPublicKey publicKey = (BCECPublicKey) ECDSA.getPublicKeyFromPrivateKey(ecPrivateKey);
+            byte[] publicKey65Bytes = ECDSA.convertPubicKeyTo65Bytes(publicKey);
+
+            String address = ECDSA.getAddressFromPublicKey(publicKey);
+            logger.info("# address: " + address);
+
             // ORDER TYPE 이 AUTO 인 주문 중에서 ORDER_GRANT 이고, isDownloaded가 false 상태인 주문 목록을 조회
-            List<BuyerAutoOrderData> buyerAutoOrders =
-                    MarketCommunicator.requestGetBuyerAutoOrders(authorization, buyerId);
-            BCECPrivateKey privateKey = (BCECPrivateKey) ECDSA.getPrivateKeyFromHexString(privateKeyString);
-            BCECPrivateKey privateKeyNew = ECDSA.getPrivateKey(privateKey.getEncoded());
+            List<OrderData> orderDataList =
+                    MarketCommunicator.requestGetBuyerOrders(authorization, buyerId);
 
-            BCECPublicKey publicKey = (BCECPublicKey) ECDSA.getPublicKeyFromPrivateKey(privateKey);
-            BCECPublicKey publicKeyNew = (BCECPublicKey) ECDSA.getPublicKey(publicKey.getEncoded());
-            String address = ECDSA.getAddressFromPublicKey(publicKeyNew);
-            byte[] publicKey65Bytes = ECDSA.convertPubicKeyTo65Bytes(publicKeyNew);
-
-            for (BuyerAutoOrderData buyerAutoOrder : buyerAutoOrders) {
-                for (String parcelId : buyerAutoOrder.getParcelIds()) {
+            for (OrderData buyerOrder : orderDataList) {
+                for (String parcelId : buyerOrder.getParcelIds()) {
+                    Operation operation = new Operation("download");
+                    operation.setId(parcelId);
                     // AMO Storage 서버에 인증 토큰 요청
-                    String storageAccessToken = AmoStorageCommunicator.requestAuthToken(address, parcelId);
-                    // TODO signature 부분 수정 필요(AmoStorageUploadProcessor와 같게 작성해야됨)
-                    byte[] signature = ECDSA.getSignature(privateKeyNew, storageAccessToken);
+                    String storageAccessToken = AmoStorageCommunicator.requestAuthToken(address, operation);
+
+                    byte[] signature = ECDSA.sign(ecPrivateKey, storageAccessToken.getBytes(StandardCharsets.UTF_8));
 
                     // AMO Storage 서버에 다운로드 요청
                     String dataHex = AmoStorageCommunicator.requestDownload(parcelId,
                             storageAccessToken, publicKey65Bytes, signature);
-
+                    String data = new String(CryptoUtils.hexToBytes(dataHex), StandardCharsets.UTF_8);
                     // 마켓 서버의 주문의 isDownloaded의 값을 true로 업데이트
-                    MarketCommunicator.requestPatchOrder(authorization, buyerAutoOrder.getAutoOrderId());
+                    MarketCommunicator.requestPatchOrder(authorization, buyerOrder.getOrderId());
 
 
                     flowFile = session.create();
@@ -185,9 +193,7 @@ public class AmoAutoDownloadProcessor extends AbstractProcessor {
                     session.transfer(flowFile, REL_SUCCESS);
                 }
             }
-            session.commit();
         } catch (Exception e) {
-            session.rollback();
             logger.error("Auto Download Processor error happened: {}", e.getCause());
             throw new ProcessException(e.getMessage());
         }

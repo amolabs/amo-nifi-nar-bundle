@@ -16,10 +16,11 @@ public class RetrofitTest {
     public void retrofitTest() throws InterruptedException {
         Retrofit retrofit = RetrofitInitializer.getRetrofitAmoStorage();
         AmoStorageHttpRequestor httpRequestor = retrofit.create(AmoStorageHttpRequestor.class);
-
+        Operation operation = new Operation("upload");
+        operation.setHash("aA12f");
         try {
             Response<PostAuthResponse> response = httpRequestor.postAuth(
-                    new PostAuthRequest("kevin", new Operation("upload", "aA12f"))
+                    new PostAuthRequest("kevin", operation)
             ).execute();
 
             PostAuthResponse result = response.body();

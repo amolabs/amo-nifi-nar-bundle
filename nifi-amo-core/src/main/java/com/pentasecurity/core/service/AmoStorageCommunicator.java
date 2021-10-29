@@ -20,11 +20,11 @@ public class AmoStorageCommunicator {
     public static Retrofit retrofit = RetrofitInitializer.getRetrofitAmoStorage();
     public static AmoStorageHttpRequestor httpRequestor = retrofit.create(AmoStorageHttpRequestor.class);
 
-    public static String requestAuthToken(String owner, String hashContent) {
+    public static String requestAuthToken(String owner, Operation operation) {
         PostAuthResponse result = null;
         try {
             Response<PostAuthResponse> response = httpRequestor.postAuth(
-                    new PostAuthRequest(owner, new Operation("upload", hashContent))
+                    new PostAuthRequest(owner, operation)
             ).execute();
 
             result = response.body();

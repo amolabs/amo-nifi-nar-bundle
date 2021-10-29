@@ -66,6 +66,19 @@ public class MarketCommunicator {
         return result.getData();
     }
 
+    public static List<OrderData> requestGetBuyerOrders(String authorization, long buyerId) {
+        OrderResponse result = null;
+        try {
+            Response<OrderResponse> response = httpRequestor.getBuyerOrders(authorization, buyerId).execute();
+            result = response.body();
+        } catch (IOException e) {
+            log.error("request buyer's orders error happened: {}", e.getMessage());
+            throw new RuntimeException(e);
+        }
+
+        return result.getData();
+    }
+
     public static List<AutoOrderFileData> requestGetAutoOrderFiles(String authorization, long autoOrderId) {
         AutoOrderFileResponse result = null;
         try {
@@ -106,10 +119,10 @@ public class MarketCommunicator {
         return result.getData();
     }
 
-    public static List<SellerOrderData> requestGetSellerOrders(String authorization, long sellerId) {
-        SellerOrderResponse result = null;
+    public static List<OrderData> requestGetSellerOrders(String authorization, long sellerId) {
+        OrderResponse result = null;
         try {
-            Response<SellerOrderResponse> response = httpRequestor.getSellerOrders(authorization, sellerId).execute();
+            Response<OrderResponse> response = httpRequestor.getSellerOrders(authorization, sellerId).execute();
             result = response.body();
         } catch (IOException e) {
             log.error("request seller's orders error happened: {}", e.getMessage());
@@ -118,6 +131,13 @@ public class MarketCommunicator {
 
         return result.getData();
     }
+
+    /**
+     * TODO 업데이트 할 정보를 넘겨주는 걸로 수정 필요.(업데이트 할 정보를 동적으로 받아야 한다. 지금은 ORDER_GRANT가 고정으로 박혀 있음)
+     * isDownloaded도 넘겨 줄 수 있어야 됨.
+     * @param authorization
+     * @param orderId
+     */
 
     public static void requestPatchOrder(String authorization, long orderId) {
         try {

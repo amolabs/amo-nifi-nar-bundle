@@ -16,6 +16,10 @@ public interface MarketHttpRequestor {
     Call<BuyerAutoOrderResponse> getBuyerAutoOrders(@Header("Authorization") String token,
                                                     @Path("buyer-id") long buyerId);
 
+    @GET("buyers/{buyer-id}/orders/auto-orders")
+    Call<OrderResponse> getBuyerOrders(@Header("Authorization") String token,
+                                       @Path("buyer-id") long buyerId);
+
     @GET("auto-orders/{auto-order-id}/files")
     Call<AutoOrderFileResponse> getAutoOrderFiles(@Header("Authorization") String token,
                                                   @Path("auto-order-id") long autoOrderId);
@@ -28,8 +32,8 @@ public interface MarketHttpRequestor {
                                                       @Path("seller-id") long sellerId);
 
     @GET("sellers/{seller-id}/orders/auto-orders")
-    Call<SellerOrderResponse> getSellerOrders(@Header("Authorization") String token,
-                                                      @Path("seller-id") long sellerId);
+    Call<OrderResponse> getSellerOrders(@Header("Authorization") String token,
+                                        @Path("seller-id") long sellerId);
 
     @PATCH("orders/{order-id}")
     Call<Void> patchOrder(@Header("Authorization") String token,

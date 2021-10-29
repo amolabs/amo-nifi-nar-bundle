@@ -1,16 +1,15 @@
 package com.pentasecurity.core.dto.storage;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.Setter;
 
+@Setter
 public class Operation {
-    @SerializedName("name")
     private String name;
-
-    @SerializedName("hash")
     private String hash;
+    private String id;
 
-    public Operation(String name, String hash) {
+    public Operation(String name) {
         this.name = name;
-        this.hash = hash;
     }
 }

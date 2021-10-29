@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Getter
-public class SellerOrderResponse {
+public class OrderResponse {
     @SerializedName("data")
-    private List<SellerOrderData> data = new ArrayList<>();
+    private List<OrderData> data = new ArrayList<>();
 }

@@ -26,8 +26,8 @@ public interface AmoStorageHttpRequestor {
     Call<PostParcelsResponse> postParcels(@HeaderMap Map<String, String> headers,
                                           @PartMap Map<String, RequestBody> params);
 
-    @Multipart
-    @POST("parcels/download/{parcel-id}")
+
+    @GET("parcels/download/{parcel-id}")
     Call<GetDownloadParcelResponse> getDownloadParcel(@HeaderMap Map<String, String> headers,
                                                       @Path("parcel-id") String parcelId);
 }

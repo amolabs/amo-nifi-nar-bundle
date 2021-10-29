@@ -17,6 +17,7 @@
 package com.pentasecurity.processor;
 
 import com.pentasecurity.core.crypto.ECDSA;
+import com.pentasecurity.core.dto.storage.Operation;
 import com.pentasecurity.core.exception.InvalidIncomingProcessorException;
 import com.pentasecurity.core.service.AmoStorageCommunicator;
 import com.pentasecurity.core.utils.CryptoUtils;
@@ -167,7 +168,10 @@ public class AmoStorageUploadProcessor extends AbstractProcessor {
 
             byte[] sha256 = CryptoUtils.sha256(content);
             String hashContent = CryptoUtils.bytesToHex(sha256);
-            String accessToken = AmoStorageCommunicator.requestAuthToken(address, hashContent);
+            Operation operation = new Operation("upload");
+            operation.setHash(hashContent);
+
+            String accessToken = AmoStorageCommunicator.requestAuthToken(address, operation);
 
             byte[] signature = ECDSA.sign(ecPrivateKey, accessToken.getBytes(StandardCharsets.UTF_8));
 

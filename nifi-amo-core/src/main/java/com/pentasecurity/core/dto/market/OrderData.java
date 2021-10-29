@@ -5,7 +5,7 @@ import lombok.Getter;
 import java.util.List;
 
 @Getter
-public class SellerOrderData {
+public class OrderData {
     private long orderId;
     private long buyerId;
     private long sellerId;
